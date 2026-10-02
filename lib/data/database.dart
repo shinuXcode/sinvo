@@ -7,6 +7,7 @@ class AppDatabase {
   AppDatabase._();
   static final instance = AppDatabase._();
   late Database db;
+  bool initialized = false;
   final uuid = const Uuid();
 
   Future<void> init() async {
@@ -32,6 +33,7 @@ class AppDatabase {
       },
       onOpen: (d) async => d.execute('PRAGMA foreign_keys = ON'),
     );
+    initialized = true;
   }
 
   Future<List<Map<String,Object?>>> products({String q = '', bool low = false}) async {
