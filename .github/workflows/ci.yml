@@ -29,6 +29,7 @@ jobs:
           channel: stable
           cache: true
       - run: flutter --version
+      - run: flutter create --platforms=android .
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
