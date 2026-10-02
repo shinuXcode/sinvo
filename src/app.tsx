@@ -1,8 +1,8 @@
 import{useEffect,useMemo,useState}from"react";import{Product,Sale,State,exportState,importState,id,load,money,save}from"./db";
 type Tab="home"|"products"|"billing"|"sales"|"reports"|"settings";
 const blank=():Product=>({id:id(),name:"",sku:"",barcode:"",category:"",buy:0,sell:0,stock:0,minStock:5,unit:"pcs",createdAt:Date.now(),updatedAt:Date.now()});
-export default function App(){const[s,setS]=useState<State|null>(null),[tab,setTab]=useState<Tab>("home"),[q,setQ]=useState(""),[saleQ,setSaleQ]=useState(""),[cart,setCart]=useState<{p:Product;qty:number}[]>([]),[payment,setPayment]=useState<Sale["payment"]>("Cash"),[discount,setDiscount]=useState(0),[form,setForm]=useState<Product|null>(null),[stockForm,setStockForm]=useState<string|null>(null);
-useEffect(()=>{load().then(setS)},[]);if(!s)return <div className="loading">Loading Sinvo…</div>;
+export default function App(){const[s,setS]=useState<State|null>(null);useEffect(()=>{load().then(setS)},[]);if(!s)return <div className="loading">Loading Sinvo…</div>;return <Dashboard s={s} setS={setS}/>;}
+function Dashboard({s,setS}:{s:State;setS:React.Dispatch<React.SetStateAction<State|null>>}){const[tab,setTab]=useState<Tab>("home"),[q,setQ]=useState(""),[saleQ,setSaleQ]=useState(""),[cart,setCart]=useState<{p:Product;qty:number}[]>([]),[payment,setPayment]=useState<Sale["payment"]>("Cash"),[discount,setDiscount]=useState(0),[form,setForm]=useState<Product|null>(null),[stockForm,setStockForm]=useState<string|null>(null);
 const persist=async(n:State)=>{setS(n);await save(n)};
 const index=useMemo(()=>s.products.map(p=>({p,text:(p.name+" "+p.sku+" "+p.barcode+" "+p.category).toLowerCase()})),[s.products]);
 const query=q.trim().toLowerCase(), products=useMemo(()=>query?index.filter(x=>x.text.includes(query)).map(x=>x.p):s.products,[index,query,s.products]);
