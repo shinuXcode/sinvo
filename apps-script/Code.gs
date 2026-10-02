@@ -1,0 +1,4 @@
+function doGet(){return out({ok:true,service:"Sinvo backup"})}
+function doPost(e){try{var p=JSON.parse(e.postData.contents||"{}");if(p.action!=="backup")return out({ok:false,error:"Unknown action"});var ss=SpreadsheetApp.getActiveSpreadsheet(),d=p.data||{};write(ss,"Settings",d.settings);write(ss,"Products",d.products);write(ss,"Customers",d.customers);write(ss,"Sales",d.sales);write(ss,"Purchases",d.purchases);write(ss,"Expenses",d.expenses);write(ss,"Stock",d.stock);return out({ok:true})}catch(err){return out({ok:false,error:String(err)})}}
+function write(ss,name,value){var sh=ss.getSheetByName(name)||ss.insertSheet(name);sh.clear();sh.getRange(1,1).setValue(JSON.stringify(value||[]));sh.getRange(2,1).setValue("Backup: "+new Date())}
+function out(x){return ContentService.createTextOutput(JSON.stringify(x)).setMimeType(ContentService.MimeType.JSON)}
