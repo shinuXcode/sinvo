@@ -4,7 +4,7 @@ export type SaleItem={productId:string;name:string;qty:number;price:number};
 export type Sale={id:string;invoice:string;customerId:string;customerName:string;payment:"Cash"|"UPI"|"Card"|"Credit";items:SaleItem[];subtotal:number;discount:number;total:number;createdAt:number};
 export type PurchaseItem={productId:string;qty:number;cost:number};
 export type Purchase={id:string;supplier:string;invoice:string;items:PurchaseItem[];total:number;createdAt:number};
-type State={products:Product[];customers:Customer[];sales:Sale[];purchases:Purchase[];settings:{shop:string;phone:string;address:string;currency:string;prefix:string}};
+export type State={products:Product[];customers:Customer[];sales:Sale[];purchases:Purchase[];settings:{shop:string;phone:string;address:string;currency:string;prefix:string}};
 const KEY="sinvo-state-v1";const empty:State={products:[],customers:[],sales:[],purchases:[],settings:{shop:"My Shop",phone:"",address:"",currency:"₹",prefix:"INV"}};
 const req=<T,>(r:IDBRequest<T>)=>new Promise<T>((ok,no)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
 let memory:State|null=null;
