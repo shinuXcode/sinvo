@@ -1,31 +1,24 @@
-name: Build Sinvo Android APK
+name: Build Android APK
 on:
+  workflow_dispatch:
   push:
     branches: [main]
-  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - run: npm run build
       - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-      - name: Bundle web app into APK
-        run: |
-          mkdir -p android/app/src/main/assets
-          cp index.html android/app/src/main/assets/index.html
-          cp manifest.json android/app/src/main/assets/manifest.json
-          cp sw.js android/app/src/main/assets/sw.js
-      - name: Build debug APK
-        working-directory: android
-        run: gradle assembleDebug --no-daemon
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+        with: {distribution: temurin, java-version: "17"}
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - run: rm -rf android/app/src/main/assets/web && mkdir -p android/app/src/main/assets/web && cp -r dist/. android/app/src/main/assets/web/
+      - run: gradle -p android assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
         with:
           name: sinvo-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
