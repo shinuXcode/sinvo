@@ -55,9 +55,6 @@ function expense(){openModal("Add expense",'<div class="form"><div><label class=
 function saveExpense(){var a=+ea.value||0;if(a<=0)return toast("Invalid amount");db.expenses.push({id:uid(),date:today(),category:ec.value.trim()||"General",amount:a,note:en.value.trim()});save();closeModal();render()}
 function delExpense(i){if(confirm("Delete expense?")){db.expenses=db.expenses.filter(function(x){return x.id!=i});save();render()}}
 function saveSettings(){db.settings={shop:shop.value.trim()||"My Shop",phone:phone.value.trim(),address:address.value.trim(),currency:currency.value.trim()||"₹",prefix:prefix.value.trim()||"INV"};save();toast("Settings saved");render()}
-function backup(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:"application/json"}));a.download="sinvo-backup-"+today()+".json";a.click();toast("Backup downloaded")}
-document.getElementById("file").onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(!x.products||!x.sales)throw 0;if(confirm("Replace current data?")){db=Object.assign({},D,x);save();render();toast("Backup restored")}}catch(e){toast("Invalid backup")}};r.readAsText(f)}
-function syncSheet(){var u=(document.getElementById("sheeturl")||{}).value||localStorage.sinvoUrl||"";u=u.trim();if(!u)return toast("Add Apps Script URL");localStorage.sinvoUrl=u;fetch(u,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"backup",data:db,updatedAt:new Date().toISOString()})}).then(function(r){if(!r.ok)throw 0;toast("Google Sheet synced")}).catch(function(){toast("Sync failed — check URL/internet")})}
 function resetAll(){if(confirm("Delete ALL local shop data?")){db=JSON.parse(JSON.stringify(D));save();render();toast("Data cleared")}}
 nav();render();if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
 </script></body></html>
