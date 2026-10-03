@@ -13,4 +13,55 @@ try{const db=await idb();const tx=db.transaction("state","readonly");const r=tx.
 export async function save(s:State){memory=normalize(s);if(!("indexedDB"in window)){localStorage.setItem(KEY,JSON.stringify(memory));return}const db=await idb();const tx=db.transaction("state","readwrite");tx.objectStore("state").put(JSON.stringify(memory),"main");await new Promise<void>((ok,no)=>{tx.oncomplete=()=>ok();tx.onerror=()=>no(tx.error)})}
 export function id(){return crypto.randomUUID()}export function money(n:number,c="₹"){return c+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
 export function exportState(s:State){const b=new Blob([JSON.stringify(s,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sinvo-backup.json";a.click();URL.revokeObjectURL(a.href)}
+
+function cleanKey(v:any){return String(v??"").trim().toLowerCase().replace(/[\s_\-\/().]+/g,"")}
+function pick(o:any,keys:string[]){const map:any={};Object.keys(o||{}).forEach(k=>map[cleanKey(k)]=o[k]);for(const k of keys){const v=map[cleanKey(k)];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return ""}
+function num(v:any){const n=Number(String(v??"").replace(/[^0-9.\-]/g,""));return Number.isFinite(n)?n:0}
+function productFromExternal(raw:any):Product|null{
+  if(!raw||typeof raw!=="object")return null;
+  const name=String(pick(raw,["name","item name","itemname","product name","productname","item","product"])||"").trim();
+  if(!name)return null;
+  const now=Date.now();
+  return {
+    id:id(),name,brand:String(pick(raw,["brand","brand name","brandname"])||"").trim(),
+    model:String(pick(raw,["model","size","size/weight","sizeweight","weight","variant"])||"").trim(),
+    sku:String(pick(raw,["sku","item code","itemcode","code"])||"").trim(),
+    barcode:String(pick(raw,["barcode","bar code","upc","qr","qrcode","qr code"])||"").trim(),
+    category:String(pick(raw,["category","group","type"])||"").trim(),
+    buy:num(pick(raw,["buy","buy price","buyprice","cost","cost price","costprice","purchase price","purchaseprice"])),
+    sell:num(pick(raw,["sell","sale","sale price","saleprice","selling price","sellingprice","price","rate"])),
+    stock:num(pick(raw,["stock","quantity","qty","item quantity","itemquantity"])),
+    minStock:num(pick(raw,["min stock","minstock","minimum stock","minimumstock"])),
+    unit:String(pick(raw,["unit","units"])||"pcs").trim()||"pcs",createdAt:now,updatedAt:now
+  };
+}
+function findExternalItems(root:any):any[]{
+  if(Array.isArray(root))return root;
+  if(!root||typeof root!=="object")return [];
+  for(const k of ["products","items","itemlist","productlist","pricelist","price list","catalog","catalogue","data"]){
+    const v=root[k]??root[Object.keys(root).find(x=>cleanKey(x)===cleanKey(k))||""];
+    if(Array.isArray(v)&&v.length)return v;
+  }
+  for(const v of Object.values(root)){
+    if(Array.isArray(v)&&v.some((x:any)=>x&&typeof x==="object"&&pick(x,["name","item name","product name","item","product"])))return v;
+  }
+  return [];
+}
+function parseCsv(text:string):any[]{
+  const rows:string[][]=[];let row:string[]=[],cell="",quoted=false;
+  for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(ch==='"'){if(quoted&&next==='"'){cell+='"';i++}else quoted=!quoted}else if(ch===','&&!quoted){row.push(cell);cell=""}else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&next==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell=""}else cell+=ch}
+  if(cell||row.length){row.push(cell);rows.push(row)}
+  const headers=(rows.shift()||[]).map(x=>x.trim());
+  return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]??""])));
+}
+export async function importMakePriceList(file:File):Promise<{products:Product[];format:"json"|"csv";source:string}>{
+  const text=await file.text();const lower=file.name.toLowerCase();let raw:any[];
+  if(lower.endsWith(".csv")||lower.endsWith(".txt")){raw=parseCsv(text);return {products:raw.map(productFromExternal).filter(Boolean) as Product[],format:"csv",source:"Make Price List / CSV"}}
+  let parsed:any;try{parsed=JSON.parse(text)}catch{throw Error("Unsupported backup format")}
+  raw=findExternalItems(parsed);
+  if(!raw.length&&Array.isArray(parsed?.products))raw=parsed.products;
+  const products=raw.map(productFromExternal).filter(Boolean) as Product[];
+  if(!products.length)throw Error("No compatible products found");
+  return {products,format:"json",source:"Make Price List / backup"}
+}
 export function importState(file:File):Promise<State>{return file.text().then(t=>{const x=JSON.parse(t);if(!x.products||!x.sales||!x.settings)throw Error("Invalid Sinvo backup");return normalize(x)})}
