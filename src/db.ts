@@ -51,7 +51,7 @@ function parseCsv(text:string):any[]{
   if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
   const rows:string[][]=[];let row:string[]=[],cell="",quoted=false;
   const firstLine=(()=>{let s="",q=false;for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(ch==='"'){if(q&&next==='"'){s+='"';i++}else q=!q}else if((ch==='\\n'||ch==='\\r')&&!q)break;else s+=ch}return s})();
-  const candidates=[",",";","\\t","|"];const delimiter=candidates.reduce((best,d)=>firstLine.split(d).length>firstLine.split(best).length?d:best,",");
+  const candidates=[",",";","\t","|"];const delimiter=candidates.reduce((best,d)=>firstLine.split(d).length>firstLine.split(best).length?d:best,",");
   for(let i=0;i<text.length;i++){
     const ch=text[i],next=text[i+1];
     if(ch==='"'){
