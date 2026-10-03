@@ -57,7 +57,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p public
-          gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[] | select(.draft == false) | select(.tag_name | startswith("v")) | {version:(.tag_name | ltrimstr("v")),tag:.tag_name,name:.name,platform:"Android",publishedAt:.published_at,latest:(.tag_name == ("v"+env.VERSION)),download:(if .tag_name == ("v"+env.VERSION) then "/api/download-apk" else .assets[0].browser_download_url end),release:.html_url,notes:(.body // "Sinvo Android release.")}] | sort_by(.publishedAt) | reverse' > public/versions.json
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[] | select(.draft == false) | select(.tag_name | startswith("v")) | {version:(.tag_name | ltrimstr("v")),tag:.tag_name,name:.name,platform:"Android",publishedAt:.published_at,latest:(.tag_name == ("v"+env.VERSION)),download:(if .tag_name == ("v"+env.VERSION) then "/api/download-apk" else .assets[0].browser_download_url end),release:.html_url,notes:(.body // "Production Android build for Sinvo: offline inventory, billing, barcode scanning, CSV import, verified backup/restore, and direct website APK download.")}] | sort_by(.publishedAt) | reverse' > public/versions.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/versions.json
