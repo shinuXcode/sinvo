@@ -15,6 +15,10 @@ import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
 import android.net.Uri;
 import android.webkit.JavascriptInterface;
+import com.google.mlkit.vision.barcode.common.Barcode;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 import android.provider.OpenableColumns;
 import android.util.Base64;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +32,7 @@ public class MainActivity extends Activity {
   private String pendingSharedName;
   private String pendingSharedMime;
   private String pendingSharedBase64;
+  private GmsBarcodeScanner barcodeScanner;
   @Override public void onCreate(Bundle b) {
     super.onCreate(b);
     WebView w = new WebView(this);
@@ -213,6 +218,31 @@ public class MainActivity extends Activity {
   }
 
   public class PrintBridge {
+    @JavascriptInterface public void scanBarcode() {
+      runOnUiThread(() -> {
+        try {
+          GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
+              .enableAutoZoom()
+              .build();
+          barcodeScanner = GmsBarcodeScanning.getClient(MainActivity.this, options);
+          barcodeScanner.startScan()
+              .addOnSuccessListener(barcode -> {
+                String raw = barcode.getRawValue();
+                if (raw == null || raw.trim().isEmpty()) {
+                  sendBarcodeResult(null, "Barcode was detected but contained no readable value");
+                } else {
+                  sendBarcodeResult(raw.trim(), null);
+                }
+              })
+              .addOnCanceledListener(() -> sendBarcodeResult(null, null))
+              .addOnFailureListener(e -> sendBarcodeResult(null, "Could not scan barcode"));
+        } catch (Exception e) {
+          sendBarcodeResult(null, "Barcode scanner is unavailable on this device");
+        }
+      });
+    }
+
+    @JavascriptInterface public String getPendingSharedFile() {
     @JavascriptInterface public String getPendingSharedFile() {
       synchronized (MainActivity.this) {
         if (pendingSharedBase64 == null) return null;
@@ -250,6 +280,15 @@ public class MainActivity extends Activity {
         printWeb.loadDataWithBaseURL("https://sinvo.local/", html, "text/html", "UTF-8", null);
       });
     }
+  }
+
+  private void sendBarcodeResult(String value, String error) {
+    String safeValue = value == null ? "null" : org.json.JSONObject.quote(value);
+    String safeError = error == null ? "null" : org.json.JSONObject.quote(error);
+    runOnUiThread(() -> {
+      if (webView == null) return;
+      webView.evaluateJavascript("window.SinvoBarcodeResult && window.SinvoBarcodeResult(" + safeValue + "," + safeError + ")", null);
+    });
   }
 
   private String mime(String path) {
