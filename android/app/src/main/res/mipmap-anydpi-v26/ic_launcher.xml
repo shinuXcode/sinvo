@@ -1,1 +1,1 @@
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@color/sinvo_icon_background"/><foreground android:drawable="@drawable/sinvo_logo"/></adaptive-icon>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@color/sinvo_icon_background"/><foreground android:drawable="@drawable/sinvo_icon"/></adaptive-icon>
