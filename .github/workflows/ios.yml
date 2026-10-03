@@ -3,36 +3,45 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: {node-version: 22}
+        with:
+          node-version: 22
       - run: npm install
-      - run: npm install @capacitor/assets@3.0.5 --save-dev
       - run: npm run build
-      - name: Prepare Sinvo iOS icon
+      - name: Prepare iOS brand assets
         run: |
           mkdir -p assets
-          base64 -d android/sinvo_logo.b64 > assets/logo.png
-          sips -z 1024 1024 assets/logo.png
+          base64 -d android/sinvo_logo.b64 > assets/icon-only.png
+          cp assets/icon-only.png assets/splash.png
+          sips -z 1024 1024 assets/icon-only.png
+          sips -z 2732 2732 assets/splash.png
       - run: npx cap add ios --packagemanager SPM
       - run: npx cap sync ios
-      - name: Generate iOS icon and splash assets
-        run: npx capacitor-assets generate --ios --assetPath assets --iconBackgroundColor '#F5FAFF' --iconBackgroundColorDark '#050811' --splashBackgroundColor '#F5FAFF' --splashBackgroundColorDark '#050811'
+      - run: npx capacitor-assets generate --ios
+      - name: Resolve Swift packages
+        run: xcodebuild -resolvePackageDependencies -workspace ios/App/App.xcworkspace -scheme App
       - name: Build unsigned iOS archive
-        run: xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphoneos -configuration Release -archivePath "$PWD/build/Sinvo.xcarchive" archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-      - name: Package unsigned IPA artifact
         run: |
+          xcodebuild -workspace ios/App/App.xcworkspace             -scheme App             -sdk iphoneos             -configuration Release             -archivePath "$PWD/build/Sinvo.xcarchive"             archive             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO
+      - name: Package iOS IPA
+        run: |
+          rm -rf build/Payload
           mkdir -p build/Payload
           cp -R build/Sinvo.xcarchive/Products/Applications/App.app build/Payload/Sinvo.app
           cd build
           zip -qry Sinvo-iOS-unsigned.ipa Payload
-      - uses: actions/upload-artifact@v4
+      - name: Publish direct iOS download
+        uses: softprops/action-gh-release@v2
         with:
-          name: sinvo-ios-unsigned
-          path: |
-            build/Sinvo-iOS-unsigned.ipa
-            build/Sinvo.xcarchive
+          tag_name: ios-latest
+          name: Sinvo iOS Latest
+          prerelease: true
+          make_latest: false
+          files: build/Sinvo-iOS-unsigned.ipa
