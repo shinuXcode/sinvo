@@ -133,3 +133,4 @@ html{scroll-behavior:smooth}.showcase{min-height:100vh;overflow:hidden;position:
 .barcodeScanButton:active{transform:scale(.96)}
 .billingSearch{display:flex;gap:8px;align-items:center}
 .billingSearch input{flex:1;min-width:0}
+\n.productQuickActions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rapidButton{border:1px solid rgba(120,130,145,.35);background:rgba(120,130,145,.1);color:inherit;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700}.rapidButton:disabled,.smallPrimary:disabled{opacity:.6;cursor:not-allowed}.autoFillBanner{margin:12px 0 4px;padding:12px 14px;border:1px solid rgba(22,119,255,.25);background:rgba(22,119,255,.08);border-radius:12px;display:grid;gap:4px}.autoFillBanner b{font-size:14px}.autoFillBanner small{opacity:.75;line-height:1.4}@media(max-width:640px){.productQuickActions{width:100%}.productQuickActions button{flex:1}}
