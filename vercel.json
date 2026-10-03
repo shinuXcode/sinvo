@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/download-apk",
+      "destination": "https://github.com/shinuXcode/sinvo/releases/download/android-latest/Sinvo-Android.apk"
+    },
+    {
       "source": "/versions",
       "destination": "/index.html"
     },
