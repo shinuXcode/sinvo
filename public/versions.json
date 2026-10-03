@@ -1,13 +1,1 @@
-[
-  {
-    "version": "1.4.0",
-    "tag": "android-latest",
-    "name": "Sinvo Android Latest",
-    "platform": "Android",
-    "publishedAt": "2026-10-03T13:20:07Z",
-    "latest": true,
-    "download": "/api/download-apk",
-    "release": "https://github.com/shinuXcode/sinvo/releases/tag/android-latest",
-    "notes": "Launcher icon refresh, Android 12+ splash branding, offline shop workflow and current production showcase build."
-  }
-]
+[{"download":"/api/download-apk","latest":true,"name":"Sinvo v1.4.0","notes":"Sinvo Android release.","platform":"Android","publishedAt":"2026-10-03T13:50:03Z","release":"https://github.com/shinuXcode/sinvo/releases/tag/v1.4.0","tag":"v1.4.0","version":"1.4.0"}]
