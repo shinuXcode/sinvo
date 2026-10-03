@@ -2,4 +2,11 @@ plugins { id "com.android.application" }
 android { namespace "com.sinvo.shop"; compileSdk 35
   defaultConfig { applicationId "com.sinvo.shop"; minSdk 23; targetSdk 35; versionCode 5; versionName "1.4.0" }
 }
+configurations.all {
+  resolutionStrategy.eachDependency { details ->
+    if (details.requested.group == "org.jetbrains.kotlin" && details.requested.name.startsWith("kotlin-stdlib")) {
+      details.useVersion "1.8.22"
+    }
+  }
+}
 dependencies { implementation "com.google.android.gms:play-services-code-scanner:16.1.0"; implementation "androidx.core:core:1.15.0" }
