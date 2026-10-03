@@ -96,3 +96,35 @@ html{scroll-behavior:smooth}.showcase{min-height:100vh;overflow:hidden;position:
 /* Keep Settings calm when the user uses the system/dark themes. */
 .app.theme-dark .settingsHeader,.app.theme-dark .settingsGroup,.app.theme-midnight .settingsHeader,.app.theme-midnight .settingsGroup,.app.theme-ocean .settingsHeader,.app.theme-ocean .settingsGroup,.app.theme-emerald .settingsHeader,.app.theme-emerald .settingsGroup,.app.theme-sunset .settingsHeader,.app.theme-sunset .settingsGroup,.app.theme-amoled .settingsHeader,.app.theme-amoled .settingsGroup{background:#121a22!important;border-color:#27343d!important;color:#e5eaec!important}
 .app.theme-dark .settingsHeader h2,.app.theme-midnight .settingsHeader h2,.app.theme-ocean .settingsHeader h2,.app.theme-emerald .settingsHeader h2,.app.theme-sunset .settingsHeader h2,.app.theme-amoled .settingsHeader h2{color:#e5eaec!important}
+
+/* Safe item preview: keep edit/delete away from the catalog surface and expose them only after preview. */
+.productPreviewBackdrop{position:fixed;inset:0;z-index:1200;background:rgba(10,14,22,.48);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.productPreviewSheet{position:relative;width:min(720px,100%);max-height:min(88vh,760px);overflow:auto;background:#fff;color:#20252b;border-radius:28px 28px 0 0;padding:34px 22px 18px;box-shadow:0 -16px 55px rgba(0,0,0,.22);animation:previewUp .22s ease-out}
+.previewHandle{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:58px;height:6px;border-radius:999px;background:#454b52;cursor:pointer}
+.previewClose{position:absolute;right:14px;top:13px;width:38px;height:38px;border:0;border-radius:50%;background:#f1f3f5;color:#515962;font-size:24px;line-height:1}
+.previewProductIcon{width:128px;height:128px;margin:4px auto 12px;border-radius:20px;display:grid;place-items:center;background:#edf3ff;color:#1677ff;font-size:48px;font-weight:900;border:1px solid #dfe7f5}
+.productPreviewSheet h2{text-align:center;font-size:27px;letter-spacing:-.02em;margin:0 42px 8px}
+.previewCategory{display:block;text-align:center;font-size:13px;letter-spacing:.08em;color:#4c555d;font-weight:700}
+.previewDivider{height:2px;background:#d55b66;margin:26px 0 10px}
+.previewDetails>div{display:grid;grid-template-columns:1fr auto;gap:18px;padding:11px 0;border-bottom:0}
+.previewDetails b{font-size:15px;color:#252b31}
+.previewDetails span{font-size:15px;color:#30363c;text-align:right;max-width:60%;word-break:break-word}
+.previewActions{display:grid;grid-template-columns:repeat(3,1fr);border-top:2px solid #d55b66;margin-top:18px;padding-top:14px}
+.previewActions button{border:0;background:transparent;color:#cf414b;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;cursor:pointer}
+.previewActions button span{font-size:30px;line-height:1}
+.previewActions button b{font-size:13px;letter-spacing:.03em}
+.previewActions .danger{color:#cf414b}
+.priceItem[role="button"]{cursor:pointer}
+.priceItem[role="button"]:focus-visible{outline:3px solid rgba(22,119,255,.25);outline-offset:2px}
+@keyframes previewUp{from{opacity:.5;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.app.theme-dark .productPreviewSheet,.app.theme-midnight .productPreviewSheet,.app.theme-ocean .productPreviewSheet,.app.theme-emerald .productPreviewSheet,.app.theme-sunset .productPreviewSheet,.app.theme-amoled .productPreviewSheet{background:#121a22;color:#e7edf0}
+.app.theme-dark .previewDetails b,.app.theme-midnight .previewDetails b,.app.theme-ocean .previewDetails b,.app.theme-emerald .previewDetails b,.app.theme-sunset .previewDetails b,.app.theme-amoled .previewDetails b{color:#e7edf0}
+.app.theme-dark .previewDetails span,.app.theme-midnight .previewDetails span,.app.theme-ocean .previewDetails span,.app.theme-emerald .previewDetails span,.app.theme-sunset .previewDetails span,.app.theme-amoled .previewDetails span{color:#c5ced4}
+.app.theme-dark .previewClose,.app.theme-midnight .previewClose,.app.theme-ocean .previewClose,.app.theme-emerald .previewClose,.app.theme-sunset .previewClose,.app.theme-amoled .previewClose{background:#26323b;color:#dce4e8}
+@media(max-width:760px){
+  .productPreviewSheet{padding:32px 15px 12px;border-radius:26px 26px 0 0}
+  .previewProductIcon{width:112px;height:112px;border-radius:18px}
+  .productPreviewSheet h2{font-size:24px}
+  .previewDetails>div{padding:10px 0}
+  .previewActions button span{font-size:27px}
+}
