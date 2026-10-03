@@ -48,13 +48,26 @@ function findExternalItems(root:any):any[]{
   return [];
 }
 function parseCsv(text:string):any[]{
-  text=text.replace(new RegExp("^"+String.fromCharCode(0xFEFF)),"");
+  if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
   const rows:string[][]=[];let row:string[]=[],cell="",quoted=false;
-  let delimiter=",";const first=text.split(/\\r?\\n/,1)[0]||"";const candidates=[",",";","\t","|"];delimiter=candidates.sort((a,b)=>(first.split(b).length-first.split(a).length))[0];
-  for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(ch==='"'){if(quoted&&next==='"'){cell+='"';i++}else quoted=!quoted}else if(ch===delimiter&&!quoted){row.push(cell);cell=""}else if((ch==='\\n'||ch==='\\r')&&!quoted){if(ch==='\\r'&&next==='\\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell=""}else cell+=ch}
-  if(cell||row.length){row.push(cell);rows.push(row)}
+  const firstLine=(()=>{let s="",q=false;for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(ch==='"'){if(q&&next==='"'){s+='"';i++}else q=!q}else if((ch==='\\n'||ch==='\\r')&&!q)break;else s+=ch}return s})();
+  const candidates=[",",";","\\t","|"];const delimiter=candidates.reduce((best,d)=>firstLine.split(d).length>firstLine.split(best).length?d:best,",");
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],next=text[i+1];
+    if(ch==='"'){
+      if(quoted&&next==='"'){cell+='"';i++}else quoted=!quoted;
+    }else if(ch===delimiter&&!quoted){
+      row.push(cell);cell="";
+    }else if((ch==='\\n'||ch==='\\r')&&!quoted){
+      if(ch==='\\r'&&next==='\\n')i++;
+      row.push(cell);
+      if(row.some(x=>x.trim()))rows.push(row);
+      row=[];cell="";
+    }else cell+=ch;
+  }
+  if(cell.length||row.length){row.push(cell);if(row.some(x=>x.trim()))rows.push(row)}
   const headers=(rows.shift()||[]).map(x=>x.trim().replace(/^"|"$/g,""));
-  return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,(r[i]??"").trim()])))
+  return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,(r[i]??"").trim()])));
 }
 export async function importMakePriceList(file:File):Promise<{products:Product[];format:"json"|"csv";source:string}>{
   const text=await file.text();const lower=file.name.toLowerCase();let raw:any[];

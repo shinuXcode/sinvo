@@ -25,6 +25,9 @@ public class MainActivity extends Activity {
   private WebView webView;
   private ValueCallback<Uri[]> fileCallback;
   private String nativeImportMode = "add";
+  private String pendingSharedName;
+  private String pendingSharedMime;
+  private String pendingSharedBase64;
   @Override public void onCreate(Bundle b) {
     super.onCreate(b);
     WebView w = new WebView(this);
@@ -58,6 +61,7 @@ public class MainActivity extends Activity {
     });
 
     w.setWebViewClient(new WebViewClient() {
+      @Override public void onPageFinished(WebView view, String url) { dispatchPendingSharedFile(); }
       @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
         String url = request.getUrl().toString();
         String prefix = "https://sinvo.local/";
@@ -77,6 +81,66 @@ public class MainActivity extends Activity {
 
     w.loadUrl("https://sinvo.local/web/index.html");
     setContentView(w);
+    handleIncomingIntent(getIntent());
+  }
+
+  @Override protected void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    setIntent(intent);
+    handleIncomingIntent(intent);
+  }
+
+  private void handleIncomingIntent(Intent intent) {
+    if (intent == null) return;
+    String action = intent.getAction();
+    if (!Intent.ACTION_SEND.equals(action) && !Intent.ACTION_SEND_MULTIPLE.equals(action)) return;
+    Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+    if (uri == null && intent.getClipData() != null && intent.getClipData().getItemCount() > 0) {
+      uri = intent.getClipData().getItemAt(0).getUri();
+    }
+    if (uri == null) return;
+    final Uri sharedUri = uri;
+    final String mime = intent.getType();
+    new Thread(() -> {
+      try {
+        String name = getDisplayName(sharedUri);
+        byte[] bytes = readUri(sharedUri);
+        synchronized (MainActivity.this) {
+          pendingSharedName = name;
+          pendingSharedMime = mime == null ? getContentResolver().getType(sharedUri) : mime;
+          pendingSharedBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
+        }
+        runOnUiThread(this::dispatchPendingSharedFile);
+      } catch (Exception e) {
+        runOnUiThread(() -> sendNativeImportResult(null, null));
+      }
+    }, "sinvo-share-reader").start();
+  }
+
+  private void dispatchPendingSharedFile() {
+    synchronized (this) {
+      if (pendingSharedBase64 == null || webView == null) return;
+      final String name = pendingSharedName;
+      final String mime = pendingSharedMime;
+      final String base64 = pendingSharedBase64;
+      final String mode = "add";
+      webView.evaluateJavascript("typeof window.SinvoAndroidFileSelected === 'function'", value -> {
+        if ("true".equals(value)) {
+          synchronized (MainActivity.this) {
+            if (!base64.equals(pendingSharedBase64)) return;
+            pendingSharedName = null;
+            pendingSharedMime = null;
+            pendingSharedBase64 = null;
+          }
+          String safeName = name == null ? "null" : org.json.JSONObject.quote(name);
+          String safeMime = mime == null ? "null" : org.json.JSONObject.quote(mime);
+          String safeBase64 = org.json.JSONObject.quote(base64);
+          webView.evaluateJavascript("window.SinvoAndroidFileSelected(" + org.json.JSONObject.quote(mode) + "," + safeName + "," + safeMime + "," + safeBase64 + ")", null);
+        } else {
+          webView.postDelayed(this::dispatchPendingSharedFile, 250);
+        }
+      });
+    }
   }
 
   @Override protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
@@ -131,11 +195,30 @@ public class MainActivity extends Activity {
     final String safeBase64 = base64 == null ? "null" : org.json.JSONObject.quote(base64);
     runOnUiThread(() -> {
       if (webView == null) return;
-      webView.evaluateJavascript("window.SinvoAndroidFileSelected && window.SinvoAndroidFileSelected(" + org.json.JSONObject.quote(mode) + "," + safeName + "," + safeBase64 + ")", null);
+      webView.evaluateJavascript("window.SinvoAndroidFileSelected && window.SinvoAndroidFileSelected(" + org.json.JSONObject.quote(mode) + "," + safeName + "," + org.json.JSONObject.quote(getLastMimeType(name)) + "," + safeBase64 + ")", null);
     });
   }
 
+  private String getLastMimeType(String name) {
+    if (name == null) return "application/octet-stream";
+    String p = name.toLowerCase(Locale.US);
+    if (p.endsWith(".json")) return "application/json";
+    if (p.endsWith(".txt")) return "text/plain";
+    return "text/csv";
+  }
+
   public class PrintBridge {
+    @JavascriptInterface public String getPendingSharedFile() {
+      synchronized (MainActivity.this) {
+        if (pendingSharedBase64 == null) return null;
+        String json = "{\"name\":"+org.json.JSONObject.quote(pendingSharedName)+",\"mimeType\":"+org.json.JSONObject.quote(pendingSharedMime)+",\"base64\":"+org.json.JSONObject.quote(pendingSharedBase64)+",\"mode\":\"add\"}";
+        pendingSharedName = null;
+        pendingSharedMime = null;
+        pendingSharedBase64 = null;
+        return json;
+      }
+    }
+
     @JavascriptInterface public void pickPriceListFile(String mode) {
       nativeImportMode = "replace".equals(mode) ? "replace" : "add";
       try {
