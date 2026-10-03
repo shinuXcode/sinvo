@@ -10,11 +10,15 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient;
+import android.webkit.ValueCallback;
+import android.net.Uri;
 import android.webkit.JavascriptInterface;
 import java.io.InputStream;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
+  private ValueCallback<Uri[]> fileCallback;
   @Override public void onCreate(Bundle b) {
     super.onCreate(b);
     WebView w = new WebView(this);
@@ -23,9 +27,23 @@ public class MainActivity extends Activity {
     s.setDomStorageEnabled(true);
     s.setDatabaseEnabled(true);
     s.setAllowFileAccess(false);
-    s.setAllowContentAccess(false);
+    s.setAllowContentAccess(true);
 
     w.addJavascriptInterface(new PrintBridge(), "SinvoAndroid");
+
+    w.setWebChromeClient(new WebChromeClient() {
+      @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+        if (fileCallback != null) fileCallback.onReceiveValue(null);
+        fileCallback = callback;
+        try {
+          startActivityForResult(params.createIntent(), 42);
+          return true;
+        } catch (Exception e) {
+          fileCallback = null;
+          return false;
+        }
+      }
+    });
 
     w.setWebViewClient(new WebViewClient() {
       @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
@@ -47,6 +65,15 @@ public class MainActivity extends Activity {
 
     w.loadUrl("https://sinvo.local/web/index.html");
     setContentView(w);
+  }
+
+  @Override protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode == 42 && fileCallback != null) {
+      Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+      fileCallback.onReceiveValue(result);
+      fileCallback = null;
+    }
   }
 
   public class PrintBridge {
