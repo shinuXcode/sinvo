@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "mkdir -p public && base64 -d android/sinvo_logo.b64 > public/sinvo-logo.png && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
