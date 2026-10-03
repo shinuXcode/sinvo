@@ -186,3 +186,64 @@ html{scroll-behavior:smooth}.showcase{min-height:100vh;overflow:hidden;position:
   .versionsPage:before,.versionsPage:after,.showcaseHero .heroVisual,.showcaseOrb,.floatBadge,.marquee div{animation:none!important}
   .versionCard,.featureGrid article,.showcaseButtons a,.downloadCard a{transition:none!important}.versionCard:hover,.featureGrid article:hover{transform:none}
 }
+
+/* SINVO release archive v2 — mobile-safe layout + richer motion */
+.versionsPage{position:relative;isolation:isolate;overflow-x:hidden;overflow-y:clip}
+.versionsPage:global{contain:paint}
+.versionsHeader{position:relative;z-index:2;width:min(1100px,100%);min-height:0;padding:92px 24px 46px;box-sizing:border-box}
+.versionsHeader>div{min-width:0;max-width:760px}
+.versionsHeader h1{max-width:100%;font-size:clamp(40px,6vw,68px);line-height:.96;overflow-wrap:anywhere;text-wrap:balance}
+.versionsHeader p{max-width:650px}
+.versionsMain{position:relative;z-index:2;width:min(900px,100%);padding:34px 24px 100px;box-sizing:border-box}
+.versionCard{isolation:isolate;will-change:transform,opacity;animation:versionReveal .72s cubic-bezier(.2,.75,.25,1) both}
+.versionCard:nth-child(1){animation-delay:.08s}.versionCard:nth-child(2){animation-delay:.18s}.versionCard:nth-child(3){animation-delay:.28s}.versionCard:nth-child(4){animation-delay:.38s}.versionCard:nth-child(n+5){animation-delay:.48s}
+.versionCard.latest{box-shadow:0 0 0 1px rgba(85,217,255,.22),0 25px 80px rgba(24,152,255,.14);animation-name:versionReveal,latestBreath;animation-duration:.72s,4.5s;animation-delay:.08s,1s;animation-iteration-count:1,infinite}
+.versionCard.latest:after{content:"";position:absolute;z-index:-1;inset:1px;border-radius:inherit;background:linear-gradient(115deg,transparent 0%,rgba(85,217,255,.08) 42%,rgba(255,255,255,.22) 50%,rgba(85,217,255,.08) 58%,transparent 100%);background-size:240% 100%;animation:cardScan 5s ease-in-out infinite;pointer-events:none}
+.versionTop,.versionDescription,.versionMeta,.versionActions{position:relative;z-index:1}
+.latestBadge{animation:badgePulse 2.4s ease-in-out infinite;box-shadow:0 0 0 0 rgba(89,217,255,.35)}
+.versionPlatform{display:inline-block;animation:platformGlow 2.8s ease-in-out infinite}
+.versionActions .showcasePrimary span,.versionActions .showcaseSecondary span,.versionsHeader .showcasePrimary span{display:inline-block;transition:transform .25s ease}
+.versionActions .showcasePrimary:hover span,.versionsHeader .showcasePrimary:hover span{transform:translateY(4px)}
+.versionActions .showcaseSecondary:hover span{transform:translate(3px,-3px)}
+.versionsHeader .eyebrow{display:inline-block;animation:eyebrowFlicker 3.5s ease-in-out infinite}
+.versionsBack{transition:transform .25s ease,color .25s ease}
+.versionsBack:hover{transform:translateX(-4px);color:#55d9ff}
+.versionsPage:before,.versionsPage:after{animation:releaseOrb 11s ease-in-out infinite alternate}
+.versionsPage:after{animation-delay:-5.5s}
+@keyframes versionReveal{from{opacity:0;transform:translateY(28px) scale(.975);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+@keyframes latestBreath{0%,100%{box-shadow:0 0 0 1px rgba(85,217,255,.22),0 25px 80px rgba(24,152,255,.14)}50%{box-shadow:0 0 0 1px rgba(85,217,255,.42),0 30px 95px rgba(24,152,255,.23)}}
+@keyframes cardScan{0%{background-position:200% 0;opacity:0}18%{opacity:.9}48%,100%{background-position:-120% 0;opacity:0}}
+@keyframes badgePulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(89,217,255,.35)}50%{transform:scale(1.045);box-shadow:0 0 0 9px rgba(89,217,255,0)}}
+@keyframes platformGlow{0%,100%{text-shadow:0 0 0 rgba(89,217,255,0)}50%{text-shadow:0 0 16px rgba(89,217,255,.55)}}
+@keyframes eyebrowFlicker{0%,100%{opacity:1;letter-spacing:.2em}48%{opacity:1}50%{opacity:.65}52%{opacity:1}55%{letter-spacing:.24em}}
+@media(max-width:700px){
+  .versionsPage{min-height:100svh}
+  .versionsHeader{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:22px;padding:96px 18px 42px;margin:0}
+  .versionsHeader h1{font-size:clamp(40px,11.5vw,54px);line-height:.98;letter-spacing:-.055em;margin:12px 0 16px;max-width:100%;overflow-wrap:anywhere}
+  .versionsHeader p{font-size:15px;line-height:1.55;max-width:32rem}
+  .versionsHeader .showcasePrimary{align-self:stretch;justify-content:center;min-height:50px}
+  .versionsMain{padding:30px 18px 72px;margin:0;gap:16px}
+  .versionCard{padding:20px;min-width:0}
+  .versionTop{gap:12px}
+  .versionCard h2{font-size:clamp(28px,8vw,36px);line-height:1.02;overflow-wrap:anywhere}
+  .versionReleaseName{font-size:12px!important}
+  .versionDescription{font-size:14px}
+  .versionMeta{grid-template-columns:1fr;gap:8px}
+  .versionMeta span{padding:10px 11px}
+  .versionActions{grid-template-columns:1fr;gap:10px}
+  .versionActions a{width:100%;justify-content:center;min-height:50px}
+  .latestBadge{flex:0 0 auto;margin-top:2px}
+}
+@media(max-width:430px){
+  .versionsBack{top:18px;left:16px}
+  .versionsHeader{padding-top:82px;padding-inline:16px;padding-bottom:34px}
+  .versionsHeader h1{font-size:clamp(38px,11vw,48px)}
+  .versionsMain{padding-inline:14px;padding-top:24px}
+  .versionCard{padding:18px;border-radius:18px}
+  .versionTop{align-items:flex-start}
+  .latestBadge{font-size:9px;padding:7px 9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .versionCard,.versionCard.latest,.versionCard.latest:after,.latestBadge,.versionPlatform,.versionsHeader .eyebrow,.versionsPage:before,.versionsPage:after{animation:none!important}
+  .versionsBack,.versionActions .showcasePrimary span,.versionsHeader .showcasePrimary span,.versionActions .showcaseSecondary span{transition:none!important}
+}
