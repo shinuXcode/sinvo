@@ -21,6 +21,9 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 import android.provider.OpenableColumns;
 import android.util.Base64;
+import java.io.File;
+import java.io.FileOutputStream;
+import androidx.core.content.FileProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Locale;
@@ -33,6 +36,8 @@ public class MainActivity extends Activity {
   private String pendingSharedMime;
   private String pendingSharedBase64;
   private GmsBarcodeScanner barcodeScanner;
+  private byte[] pendingBackupBytes;
+  private String pendingBackupName;
   @Override public void onCreate(Bundle b) {
     super.onCreate(b);
     WebView w = new WebView(this);
@@ -161,6 +166,37 @@ public class MainActivity extends Activity {
       fileCallback = null;
       return;
     }
+    if (requestCode == 44) {
+      if (resultCode == RESULT_OK && data != null && data.getData() != null && pendingBackupBytes != null) {
+        try (java.io.OutputStream out = getContentResolver().openOutputStream(data.getData())) {
+          if (out == null) throw new Exception("Unable to open destination");
+          out.write(pendingBackupBytes); out.flush();
+          sendBackupResult("Backup saved successfully");
+        } catch (Exception e) { sendBackupResult("Could not save backup"); }
+      } else sendBackupResult("Backup save cancelled");
+      pendingBackupBytes = null; pendingBackupName = null; return;
+    }
+    if (requestCode == 45) {
+      if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+        sendBackupResult("Backup restore cancelled"); return;
+      }
+      Uri uri = data.getData();
+      try {
+        String name = getDisplayName(uri);
+        String mime = getContentResolver().getType(uri);
+        byte[] bytes = readUri(uri);
+        String base64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
+        runOnUiThread(() -> {
+          if (webView == null) return;
+          webView.evaluateJavascript(
+            "window.SinvoBackupSelected && window.SinvoBackupSelected(" +
+            org.json.JSONObject.quote(name) + "," +
+            org.json.JSONObject.quote(mime == null ? "application/json" : mime) + "," +
+            org.json.JSONObject.quote(base64) + ")", null);
+        });
+      } catch (Exception e) { sendBackupResult("Could not read backup"); }
+      return;
+    }
     if (requestCode == 43) {
       if (resultCode != RESULT_OK || data == null || data.getData() == null) {
         sendNativeImportResult(null, null);
@@ -266,6 +302,47 @@ public class MainActivity extends Activity {
       }
     }
 
+    @JavascriptInterface public void saveBackupFile(String base64, String name) {
+      try {
+        pendingBackupBytes = Base64.decode(base64, Base64.DEFAULT);
+        pendingBackupName = (name == null || name.trim().isEmpty() ? "sinvo-backup.json" : name).replaceAll("[^a-zA-Z0-9._-]", "_");
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        intent.putExtra(Intent.EXTRA_TITLE, pendingBackupName);
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(intent, 44);
+      } catch (Exception e) { sendBackupResult("Could not prepare backup"); }
+    }
+
+    @JavascriptInterface public void restoreBackupFile() {
+      try {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(intent, 45);
+      } catch (Exception e) { sendBackupResult("Could not open backup picker"); }
+    }
+
+    @JavascriptInterface public void emailBackup(String base64, String name) {
+      try {
+        byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+        File dir = new File(getCacheDir(), "shared");
+        if (!dir.exists() && !dir.mkdirs()) throw new Exception("Unable to create share directory");
+        String safe = (name == null || name.trim().isEmpty() ? "sinvo-backup.json" : name).replaceAll("[^a-zA-Z0-9._-]", "_");
+        File file = new File(dir, safe);
+        try (FileOutputStream out = new FileOutputStream(file)) { out.write(bytes); out.flush(); }
+        Uri uri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fileprovider", file);
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("application/json");
+        send.putExtra(Intent.EXTRA_SUBJECT, "SINVO backup");
+        send.putExtra(Intent.EXTRA_STREAM, uri);
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(send, "Send SINVO backup"));
+      } catch (Exception e) { sendBackupResult("Could not prepare email backup"); }
+    }
+
     @JavascriptInterface public void printBill(String html) {
       runOnUiThread(() -> {
         WebView printWeb = new WebView(MainActivity.this);
@@ -279,6 +356,13 @@ public class MainActivity extends Activity {
         printWeb.loadDataWithBaseURL("https://sinvo.local/", html, "text/html", "UTF-8", null);
       });
     }
+  }
+
+  private void sendBackupResult(String message) {
+    runOnUiThread(() -> {
+      if (webView == null) return;
+      webView.evaluateJavascript("window.SinvoBackupMessage && window.SinvoBackupMessage(" + org.json.JSONObject.quote(message) + ")", null);
+    });
   }
 
   private void sendBarcodeResult(String value, String error) {
