@@ -21,26 +21,40 @@ function sameProduct(a:Product,b:Product){
   return !!name&&b.name.trim().toLowerCase()===name&&b.brand.trim().toLowerCase()===brand;
 }
 async function applyImportedProducts(incoming:Product[],mode:"add"|"replace"){
-  if(mode==="replace"){
-    await persist({...s,products:incoming});
-    setBillingMessage(incoming.length+" products imported · catalog replaced");
-    return;
-  }
+  const clean=incoming.filter(p=>p&&p.name.trim()).map(p=>({...p,id:p.id||id(),name:p.name.trim(),brand:p.brand.trim(),model:p.model.trim(),sku:p.sku.trim(),barcode:p.barcode.trim(),category:p.category.trim(),buy:Number(p.buy)||0,sell:Number(p.sell)||0,stock:Math.max(0,Number(p.stock)||0),minStock:Math.max(0,Number(p.minStock)||0),unit:p.unit?.trim()||"pcs",createdAt:p.createdAt||Date.now(),updatedAt:Date.now()}));
+  if(!clean.length)throw new Error("No valid products to save");
   let added=0,updated=0,skipped=0;
-  const next=s.products.map(p=>p);
-  for(const product of incoming){
-    const index=next.findIndex(existing=>sameProduct(product,existing));
-    if(index<0){next.push(product);added++;continue}
-    const existing=next[index];
-    if(product.name.trim()===existing.name.trim()&&product.brand.trim().toLowerCase()===existing.brand.trim().toLowerCase()&&product.buy===existing.buy&&product.sell===existing.sell&&product.stock===existing.stock&&product.category===existing.category){
-      skipped++;
-    }else{
-      next[index]={...product,id:existing.id,createdAt:existing.createdAt,updatedAt:Date.now()};
-      updated++;
+  let next:Product[];
+  if(mode==="replace"){
+    next=clean;
+  }else{
+    next=s.products.map(p=>p);
+    for(const product of clean){
+      const index=next.findIndex(existing=>sameProduct(product,existing));
+      if(index<0){next.push(product);added++;continue}
+      const existing=next[index];
+      if(product.name.trim()===existing.name.trim()&&product.brand.trim().toLowerCase()===existing.brand.trim().toLowerCase()&&product.buy===existing.buy&&product.sell===existing.sell&&product.stock===existing.stock&&product.category===existing.category){
+        skipped++;
+      }else{
+        next[index]={...product,id:existing.id,createdAt:existing.createdAt,updatedAt:Date.now()};
+        updated++;
+      }
     }
   }
-  await persist({...s,products:next});
-  setBillingMessage(`Imported: ${added} · Updated: ${updated} · Skipped: ${skipped}`);
+  const nextState:State={...s,products:next};
+  try{
+    await save(nextState);
+    const verified=await load();
+    if(verified.products.length!==next.length)throw new Error("Product list could not be verified after saving");
+    setS(verified);
+    setTab("products");
+    setQ("");
+    setBillingMessage(mode==="replace"?clean.length+" products saved · catalog replaced":`Imported: ${added} · Updated: ${updated} · Skipped: ${skipped}`);
+  }catch(err){
+    console.error("Sinvo product import save failed",err);
+    setBillingMessage(err instanceof Error?err.message:"Could not save imported products");
+    throw err;
+  }
 }
 async function importPriceListFile(f:File,mode:"add"|"replace",autoCommit=false){
   try{
@@ -59,8 +73,12 @@ async function importPriceListFile(f:File,mode:"add"|"replace",autoCommit=false)
 }
 async function confirmImport(){
   if(!importPreview)return;
-  await applyImportedProducts(importPreview.products,importPreview.mode);
-  setImportPreview(null);
+  try{
+    await applyImportedProducts(importPreview.products,importPreview.mode);
+    setImportPreview(null);
+  }catch(err){
+    console.error("Sinvo import confirmation failed",err);
+  }
 }
 async function importPriceList(e:React.ChangeEvent<HTMLInputElement>,mode:"add"|"replace"){const f=e.target.files?.[0];if(f)await importPriceListFile(f,mode);e.target.value=""}
 useEffect(()=>{
