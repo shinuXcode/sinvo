@@ -27,6 +27,8 @@ export async function loadFresh():Promise<State>{
 }
 export async function save(s:State){memory=normalize(s);if(!("indexedDB"in window)){localStorage.setItem(KEY,JSON.stringify(memory));return}const db=await idb();const tx=db.transaction("state","readwrite");tx.objectStore("state").put(JSON.stringify(memory),"main");await new Promise<void>((ok,no)=>{tx.oncomplete=()=>ok();tx.onerror=()=>no(tx.error)})}
 export function id(){return crypto.randomUUID()}export function money(n:number,c="₹"){return c+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
+export function backupBase64(s:State):string{const bytes=new TextEncoder().encode(JSON.stringify(normalize(s)));let binary="";for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(binary)}
+export function backupFileName():string{const d=new Date(),p=(n:number)=>String(n).padStart(2,"0");return "sinvo-backup-"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes())+".json"}
 export function exportState(s:State){const b=new Blob([JSON.stringify(s,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sinvo-backup.json";a.click();URL.revokeObjectURL(a.href)}
 
 function cleanKey(v:any){return String(v??"").replace(new RegExp("^"+String.fromCharCode(0xFEFF)),"").trim().toLowerCase().replace(/[\s_\-\/().]+/g,"")}
