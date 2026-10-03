@@ -54,7 +54,7 @@ async function confirmImport(){
   }
   setImportPreview(null);
 }
-async function importPriceList(e:React.ChangeEvent<HTMLInputElement>,mode:"add"|"replace")e:React.ChangeEvent<HTMLInputElement>,mode:"add"|"replace"){const f=e.target.files?.[0];if(f)await importPriceListFile(f,mode);e.target.value=""}
+async function importPriceList(e:React.ChangeEvent<HTMLInputElement>,mode:"add"|"replace"){const f=e.target.files?.[0];if(f)await importPriceListFile(f,mode);e.target.value=""}
 useEffect(()=>{
   window.SinvoAndroidFileSelected=async(mode,name,mimeType,base64)=>{
     if(!name||!base64){setBillingMessage("File selection cancelled");return}
