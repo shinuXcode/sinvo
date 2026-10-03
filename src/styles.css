@@ -128,3 +128,8 @@ html{scroll-behavior:smooth}.showcase{min-height:100vh;overflow:hidden;position:
   .previewDetails>div{padding:10px 0}
   .previewActions button span{font-size:27px}
 }
+
+.barcodeScanButton{flex:0 0 auto;width:42px;height:42px;border:1px solid rgba(120,130,145,.3);border-radius:12px;background:rgba(120,130,145,.1);color:inherit;font-size:22px;cursor:pointer;display:grid;place-items:center}
+.barcodeScanButton:active{transform:scale(.96)}
+.billingSearch{display:flex;gap:8px;align-items:center}
+.billingSearch input{flex:1;min-width:0}
