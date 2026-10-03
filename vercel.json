@@ -1,10 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/download-apk.ts": {
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
-    {
-      "source": "/api/download-apk",
-      "destination": "https://github.com/shinuXcode/sinvo/releases/download/android-latest/Sinvo-Android.apk"
-    },
     {
       "source": "/versions",
       "destination": "/index.html"
