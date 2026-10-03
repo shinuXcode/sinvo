@@ -1,4 +1,4 @@
-import{useEffect,useMemo,useState}from"react";import{Product,Sale,State,exportState,importMakePriceList,importState,id,load,money,save}from"./db";
+import{useEffect,useMemo,useState}from"react";import{Product,Sale,State,exportState,importMakePriceList,importState,id,load,loadFresh,money,save}from"./db";
 type Tab="search"|"products"|"billing"|"settings"; // production build marker
 declare global{interface Window{SinvoAndroid?:{printBill:(html:string)=>void;pickPriceListFile?:(mode:"add"|"replace")=>void;getPendingSharedFile?:()=>string|null};SinvoAndroidFileSelected?:(mode:"add"|"replace",name:string|null,mimeType:string|null,base64:string|null)=>void;Capacitor?:{isNativePlatform?:()=>boolean}}}
 const blank=():Product=>({id:id(),name:"",brand:"",model:"",sku:"",barcode:"",category:"",buy:0,sell:0,stock:0,minStock:5,unit:"pcs",createdAt:Date.now(),updatedAt:Date.now()});
@@ -44,7 +44,7 @@ async function applyImportedProducts(incoming:Product[],mode:"add"|"replace"){
   const nextState:State={...s,products:next};
   try{
     await save(nextState);
-    const verified=await load();
+    const verified=await loadFresh();
     if(verified.products.length!==next.length)throw new Error("Product list could not be verified after saving");
     setS(verified);
     setTab("products");
@@ -59,7 +59,7 @@ async function applyImportedProducts(incoming:Product[],mode:"add"|"replace"){
 async function importPriceListFile(f:File,mode:"add"|"replace",autoCommit=false){
   try{
     const r=await importMakePriceList(f);
-    if(!r.products.length)throw new Error("No products found");
+    if(!r.products.length)throw new Error("No products detected. Check the CSV Name/Item/Product column.");
     if(autoCommit){
       await applyImportedProducts(r.products,mode);
       setImportPreview(null);
