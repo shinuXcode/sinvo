@@ -71,7 +71,8 @@ function parseCsv(text:string):any[]{
 }
 export async function importMakePriceList(file:File):Promise<{products:Product[];format:"json"|"csv";source:string}>{
   const text=await file.text();const lower=file.name.toLowerCase();let raw:any[];
-  if(lower.endsWith(".csv")||lower.endsWith(".txt")){raw=parseCsv(text);const products=raw.map(productFromExternal).filter(Boolean) as Product[];if(!products.length)throw Error("No product rows detected. Check CSV headers.");return {products,format:"csv",source:"Make Price List / CSV"}}
+  const looksCsv=lower.endsWith(".csv")||lower.endsWith(".txt")||(!lower.endsWith(".json")&&text.split(/\r?\n/).slice(0,5).some(line=>line.includes(",")||line.includes(";")||line.includes("\\t")||line.includes("|")));
+  if(looksCsv){raw=parseCsv(text);const products=raw.map(productFromExternal).filter(Boolean) as Product[];if(!products.length)throw Error("No product rows detected. Check CSV headers.");return {products,format:"csv",source:"Make Price List / CSV"}}
   let parsed:any;try{parsed=JSON.parse(text)}catch{throw Error("Unsupported backup format")}
   raw=findExternalItems(parsed);
   if(!raw.length&&Array.isArray(parsed?.products))raw=parsed.products;
