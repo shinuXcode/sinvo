@@ -15,7 +15,8 @@
     "typescript": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "@capacitor/core": "^8.0.0"
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0"
   },
   "devDependencies": {
     "@types/react": "latest",
