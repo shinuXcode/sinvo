@@ -134,3 +134,55 @@ html{scroll-behavior:smooth}.showcase{min-height:100vh;overflow:hidden;position:
 .billingSearch{display:flex;gap:8px;align-items:center}
 .billingSearch input{flex:1;min-width:0}
 \n.productQuickActions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rapidButton{border:1px solid rgba(120,130,145,.35);background:rgba(120,130,145,.1);color:inherit;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700}.rapidButton:disabled,.smallPrimary:disabled{opacity:.6;cursor:not-allowed}.autoFillBanner{margin:12px 0 4px;padding:12px 14px;border:1px solid rgba(22,119,255,.25);background:rgba(22,119,255,.08);border-radius:12px;display:grid;gap:4px}.autoFillBanner b{font-size:14px}.autoFillBanner small{opacity:.75;line-height:1.4}@media(max-width:640px){.productQuickActions{width:100%}.productQuickActions button{flex:1}}
+/* Release archive refinement + responsive motion */
+.versionsPage{overflow:hidden;position:relative}
+.versionsPage:before,.versionsPage:after{content:"";position:fixed;z-index:0;width:34vw;height:34vw;border-radius:50%;filter:blur(70px);opacity:.16;pointer-events:none;animation:releaseOrb 12s ease-in-out infinite alternate}
+.versionsPage:before{top:8%;right:-12%;background:#168cff}.versionsPage:after{bottom:-12%;left:-12%;background:#16c9ee;animation-delay:-5s}
+.versionsHeader,.versionsMain,.versionsBack{position:relative;z-index:1}
+.versionCard{position:relative;overflow:hidden;transition:transform .35s cubic-bezier(.2,.75,.25,1),border-color .35s ease,box-shadow .35s ease}
+.versionCard:before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.07) 50%,transparent 75%);transform:translateX(-120%);transition:transform .7s ease;pointer-events:none}
+.versionCard:hover{transform:translateY(-6px) scale(1.005);box-shadow:0 24px 70px rgba(0,0,0,.24)}
+.versionCard:hover:before{transform:translateX(120%)}
+.versionReleaseName{margin:4px 0 0!important;color:#7edfff!important;font-size:13px!important;font-weight:700!important;letter-spacing:.01em}
+.versionDescription{max-width:700px}
+.versionMeta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.versionMeta span{display:flex;flex-direction:column;gap:5px;padding:11px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.025)}
+.versionMeta b{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:#55d9ff}
+.versionActions a{transition:transform .22s ease,box-shadow .22s ease}.versionActions a:hover{transform:translateY(-2px)}
+.showcaseHero .heroVisual{animation:heroFloat 6s ease-in-out infinite}
+.showcaseOrb{animation:orbFloat 10s ease-in-out infinite alternate}
+.showcaseOrb.orbB{animation-delay:-4s}
+.floatBadge{animation:badgeFloat 4s ease-in-out infinite}.badgeTwo{animation-delay:-2s}
+.featureGrid article{transition:transform .3s cubic-bezier(.2,.75,.25,1),border-color .3s ease,box-shadow .3s ease}
+.featureGrid article:hover{transform:translateY(-7px);box-shadow:0 18px 45px rgba(0,0,0,.2)}
+.showcaseButtons a,.downloadCard a,.showcaseHeader a{transition:transform .22s ease,filter .22s ease,box-shadow .22s ease}
+.showcaseButtons a:hover,.downloadCard a:hover{transform:translateY(-3px)}
+.marquee div{animation:marqueeMove 22s linear infinite}
+@keyframes releaseOrb{from{transform:translate3d(-15px,-8px,0) scale(.94)}to{transform:translate3d(18px,14px,0) scale(1.06)}}
+@keyframes heroFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(.35deg)}}
+@keyframes orbFloat{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(24px,-18px,0) scale(1.08)}}
+@keyframes badgeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes marqueeMove{from{transform:translateX(0)}to{transform:translateX(-22%)}}
+@media(max-width:900px){
+  .showcaseHeader{padding-inline:20px}.showcaseNav{gap:12px}
+  .showcaseHero{grid-template-columns:1fr!important}.heroVisual{margin-top:26px}
+  .versionMeta{grid-template-columns:1fr 1fr}
+}
+@media(max-width:700px){
+  .showcaseHeader{height:auto;min-height:64px;flex-wrap:wrap;padding-block:12px}
+  .showcaseLogo{flex:1;min-width:150px}.showcaseNav{order:3;width:100%;overflow-x:auto;padding:4px 0 2px;scrollbar-width:none}.showcaseNav::-webkit-scrollbar{display:none}.showcaseNav a{white-space:nowrap}
+  .showcase main{padding-top:46px}
+  .showcaseHero p{font-size:16px}.showcaseButtons{display:grid;grid-template-columns:1fr 1fr}.showcaseButtons .showcasePrimary{grid-column:1/-1}
+  .downloadGrid{grid-template-columns:1fr!important}.founderCard{grid-template-columns:1fr!important}
+  .versionsHeader{padding-top:88px}.versionsHeader .showcasePrimary{width:100%;text-align:center}
+  .versionMeta{grid-template-columns:1fr}.versionActions{display:grid;grid-template-columns:1fr}.versionActions a{text-align:center}
+}
+@media(max-width:430px){
+  .showcaseButtons{grid-template-columns:1fr}.showcaseButtons .showcasePrimary{grid-column:auto}
+  .showcaseHero h1{font-size:clamp(38px,12vw,52px)}
+  .versionsMain{padding-inline:14px}.versionCard{padding:18px;border-radius:18px}
+}
+@media(prefers-reduced-motion:reduce){
+  .versionsPage:before,.versionsPage:after,.showcaseHero .heroVisual,.showcaseOrb,.floatBadge,.marquee div{animation:none!important}
+  .versionCard,.featureGrid article,.showcaseButtons a,.downloadCard a{transition:none!important}.versionCard:hover,.featureGrid article:hover{transform:none}
+}
