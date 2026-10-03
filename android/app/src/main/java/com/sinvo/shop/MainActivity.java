@@ -2,6 +2,7 @@ package com.sinvo.shop;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.print.PrintManager;
 import android.print.PrintAttributes;
 import android.os.Bundle;
@@ -36,7 +37,11 @@ public class MainActivity extends Activity {
         if (fileCallback != null) fileCallback.onReceiveValue(null);
         fileCallback = callback;
         try {
-          startActivityForResult(params.createIntent(), 42);
+          Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+          intent.addCategory(Intent.CATEGORY_OPENABLE);
+          intent.setType("*/*");
+          intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"text/csv","text/plain","application/json","application/octet-stream"});
+          startActivityForResult(intent, 42);
           return true;
         } catch (Exception e) {
           fileCallback = null;
