@@ -14,44 +14,52 @@ function addCart(p:Product){setBillingMessage("");setCart(c=>{const e=c.find(x=>
 const subtotal=cart.reduce((a,x)=>a+x.qty*x.p.sell,0),safeDiscount=Math.min(Math.max(0,Number(discount)||0),subtotal),total=subtotal-safeDiscount;
 function checkout(){if(!cart.length)return;const bad=cart.find(x=>x.qty>x.p.stock);if(bad){setBillingMessage("Not enough stock for "+bad.p.name);return;}const inv=(s.settings.prefix||"INV")+"-"+String(s.sales.length+1).padStart(5,"0"),sale:Sale={id:id(),invoice:inv,payment,items:cart.map(x=>({productId:x.p.id,name:x.p.name,qty:x.qty,price:x.p.sell})),subtotal,discount,total,createdAt:Date.now()};const ps=s.products.map(p=>{const x=cart.find(x=>x.p.id===p.id);return x?{...p,stock:p.stock-x.qty,updatedAt:Date.now()}:p});persist({...s,products:ps,sales:[...s.sales,sale]});setLastBill(sale);setCart([]);setDiscount(0);setBillingMessage("Bill "+inv+" saved")}
 async function restore(e:React.ChangeEvent<HTMLInputElement>){const f=e.target.files?.[0];if(!f)return;try{const x=await importState(f);await save(x);setS(x);setBillingMessage("Sinvo backup restored")}catch{setBillingMessage("Invalid Sinvo backup")}}
-async function importPriceListFile(f:File,mode:"add"|"replace"){
-  try{
-    const r=await importMakePriceList(f);
-    if(!r.products.length)throw new Error("No products found");
-    setImportPreview({mode,name:f.name,products:r.products});
-  }catch(err){
-    console.error("Sinvo price-list import failed",err);
-    setBillingMessage(err instanceof Error?err.message:"Could not import this file");
-  }
-}
 function sameProduct(a:Product,b:Product){
   const barcode=a.barcode.trim(),sku=a.sku.trim(),name=a.name.trim().toLowerCase(),brand=a.brand.trim().toLowerCase();
   if(barcode&&b.barcode.trim()===barcode)return true;
   if(sku&&b.sku.trim()===sku)return true;
   return !!name&&b.name.trim().toLowerCase()===name&&b.brand.trim().toLowerCase()===brand;
 }
+async function applyImportedProducts(incoming:Product[],mode:"add"|"replace"){
+  if(mode==="replace"){
+    await persist({...s,products:incoming});
+    setBillingMessage(incoming.length+" products imported · catalog replaced");
+    return;
+  }
+  let added=0,updated=0,skipped=0;
+  const next=s.products.map(p=>p);
+  for(const product of incoming){
+    const index=next.findIndex(existing=>sameProduct(product,existing));
+    if(index<0){next.push(product);added++;continue}
+    const existing=next[index];
+    if(product.name.trim()===existing.name.trim()&&product.brand.trim().toLowerCase()===existing.brand.trim().toLowerCase()&&product.buy===existing.buy&&product.sell===existing.sell&&product.stock===existing.stock&&product.category===existing.category){
+      skipped++;
+    }else{
+      next[index]={...product,id:existing.id,createdAt:existing.createdAt,updatedAt:Date.now()};
+      updated++;
+    }
+  }
+  await persist({...s,products:next});
+  setBillingMessage(`Imported: ${added} · Updated: ${updated} · Skipped: ${skipped}`);
+}
+async function importPriceListFile(f:File,mode:"add"|"replace",autoCommit=false){
+  try{
+    const r=await importMakePriceList(f);
+    if(!r.products.length)throw new Error("No products found");
+    if(autoCommit){
+      await applyImportedProducts(r.products,mode);
+      setImportPreview(null);
+    }else{
+      setImportPreview({mode,name:f.name,products:r.products});
+    }
+  }catch(err){
+    console.error("Sinvo price-list import failed",err);
+    setBillingMessage(err instanceof Error?err.message:"Could not import this file");
+  }
+}
 async function confirmImport(){
   if(!importPreview)return;
-  if(importPreview.mode==="replace"){
-    await persist({...s,products:importPreview.products});
-    setBillingMessage(importPreview.products.length+" products imported · catalog replaced");
-  }else{
-    let added=0,updated=0,skipped=0;
-    const next=s.products.map(p=>p);
-    for(const incoming of importPreview.products){
-      const index=next.findIndex(existing=>sameProduct(incoming,existing));
-      if(index<0){next.push(incoming);added++;continue}
-      const existing=next[index];
-      if(incoming.name.trim()===existing.name.trim()&&incoming.brand.trim().toLowerCase()===existing.brand.trim().toLowerCase()&&incoming.buy===existing.buy&&incoming.sell===existing.sell&&incoming.stock===existing.stock&&incoming.category===existing.category){
-        skipped++;
-      }else{
-        next[index]={...incoming,id:existing.id,createdAt:existing.createdAt,updatedAt:Date.now()};
-        updated++;
-      }
-    }
-    await persist({...s,products:next});
-    setBillingMessage(`Imported: ${added} · Updated: ${updated} · Skipped: ${skipped}`);
-  }
+  await applyImportedProducts(importPreview.products,importPreview.mode);
   setImportPreview(null);
 }
 async function importPriceList(e:React.ChangeEvent<HTMLInputElement>,mode:"add"|"replace"){const f=e.target.files?.[0];if(f)await importPriceListFile(f,mode);e.target.value=""}
@@ -61,7 +69,7 @@ useEffect(()=>{
     try{
       const bin=atob(base64),bytes=new Uint8Array(bin.length);
       for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-      await importPriceListFile(new File([bytes],name,{type:mimeType||"application/octet-stream"}),mode);
+      await importPriceListFile(new File([bytes],name,{type:mimeType||"application/octet-stream"}),mode,true);
     }catch(err){
       console.error("Sinvo native import failed",err);
       setBillingMessage("Could not import the selected file");
