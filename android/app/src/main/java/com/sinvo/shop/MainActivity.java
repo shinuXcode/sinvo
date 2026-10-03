@@ -94,7 +94,13 @@ public class MainActivity extends Activity {
     if (intent == null) return;
     String action = intent.getAction();
     if (!Intent.ACTION_SEND.equals(action) && !Intent.ACTION_SEND_MULTIPLE.equals(action)) return;
-    Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+    Uri uri = null;
+    if (Intent.ACTION_SEND.equals(action)) {
+      uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+    } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
+      java.util.ArrayList<Uri> uris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+      if (uris != null && !uris.isEmpty()) uri = uris.get(0);
+    }
     if (uri == null && intent.getClipData() != null && intent.getClipData().getItemCount() > 0) {
       uri = intent.getClipData().getItemAt(0).getUri();
     }
