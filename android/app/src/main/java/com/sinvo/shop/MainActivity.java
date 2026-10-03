@@ -243,7 +243,6 @@ public class MainActivity extends Activity {
     }
 
     @JavascriptInterface public String getPendingSharedFile() {
-    @JavascriptInterface public String getPendingSharedFile() {
       synchronized (MainActivity.this) {
         if (pendingSharedBase64 == null) return null;
         String json = "{\"name\":"+org.json.JSONObject.quote(pendingSharedName)+",\"mimeType\":"+org.json.JSONObject.quote(pendingSharedMime)+",\"base64\":"+org.json.JSONObject.quote(pendingSharedBase64)+",\"mode\":\"add\"}";
