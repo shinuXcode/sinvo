@@ -1,0 +1,31 @@
+name: Build iOS package
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: npm install
+      - run: npm install @capacitor/ios@8
+      - run: npm run build
+      - run: npx cap add ios --packagemanager SPM
+      - run: npx cap sync ios
+      - name: Build unsigned iOS archive
+        run: xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphoneos -configuration Release -archivePath "$PWD/build/Sinvo.xcarchive" archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+      - name: Package unsigned IPA artifact
+        run: |
+          mkdir -p build/Payload
+          cp -R build/Sinvo.xcarchive/Products/Applications/App.app build/Payload/Sinvo.app
+          cd build
+          zip -qry Sinvo-iOS-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sinvo-ios-unsigned
+          path: |
+            build/Sinvo-iOS-unsigned.ipa
+            build/Sinvo.xcarchive
