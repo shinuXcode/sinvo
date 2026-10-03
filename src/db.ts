@@ -14,7 +14,7 @@ export async function save(s:State){memory=normalize(s);if(!("indexedDB"in windo
 export function id(){return crypto.randomUUID()}export function money(n:number,c="₹"){return c+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
 export function exportState(s:State){const b=new Blob([JSON.stringify(s,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sinvo-backup.json";a.click();URL.revokeObjectURL(a.href)}
 
-function cleanKey(v:any){return String(v??"").trim().toLowerCase().replace(/[\s_\-\/().]+/g,"")}
+function cleanKey(v:any){return String(v??"").replace(new RegExp("^"+String.fromCharCode(0xFEFF)),"").trim().toLowerCase().replace(/[\s_\-\/().]+/g,"")}
 function pick(o:any,keys:string[]){const map:any={};Object.keys(o||{}).forEach(k=>map[cleanKey(k)]=o[k]);for(const k of keys){const v=map[cleanKey(k)];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return ""}
 function num(v:any){const n=Number(String(v??"").replace(/[^0-9.\-]/g,""));return Number.isFinite(n)?n:0}
 function productFromExternal(raw:any):Product|null{
@@ -48,9 +48,9 @@ function findExternalItems(root:any):any[]{
   return [];
 }
 function parseCsv(text:string):any[]{
-  text=text.replace(/^\\uFEFF/,"");
+  text=text.replace(new RegExp("^"+String.fromCharCode(0xFEFF)),"");
   const rows:string[][]=[];let row:string[]=[],cell="",quoted=false;
-  let delimiter=",";const first=text.split(/\\r?\\n/,1)[0]||"";const candidates=[",",";","\\t","|"];delimiter=candidates.sort((a,b)=>(first.split(b).length-first.split(a).length))[0];
+  let delimiter=",";const first=text.split(/\\r?\\n/,1)[0]||"";const candidates=[",",";","\t","|"];delimiter=candidates.sort((a,b)=>(first.split(b).length-first.split(a).length))[0];
   for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(ch==='"'){if(quoted&&next==='"'){cell+='"';i++}else quoted=!quoted}else if(ch===delimiter&&!quoted){row.push(cell);cell=""}else if((ch==='\\n'||ch==='\\r')&&!quoted){if(ch==='\\r'&&next==='\\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell=""}else cell+=ch}
   if(cell||row.length){row.push(cell);rows.push(row)}
   const headers=(rows.shift()||[]).map(x=>x.trim().replace(/^"|"$/g,""));
