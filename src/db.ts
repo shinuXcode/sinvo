@@ -48,15 +48,17 @@ function findExternalItems(root:any):any[]{
   return [];
 }
 function parseCsv(text:string):any[]{
+  text=text.replace(/^\\uFEFF/,"");
   const rows:string[][]=[];let row:string[]=[],cell="",quoted=false;
-  for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(ch==='"'){if(quoted&&next==='"'){cell+='"';i++}else quoted=!quoted}else if(ch===','&&!quoted){row.push(cell);cell=""}else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&next==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell=""}else cell+=ch}
+  let delimiter=",";const first=text.split(/\\r?\\n/,1)[0]||"";const candidates=[",",";","\\t","|"];delimiter=candidates.sort((a,b)=>(first.split(b).length-first.split(a).length))[0];
+  for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(ch==='"'){if(quoted&&next==='"'){cell+='"';i++}else quoted=!quoted}else if(ch===delimiter&&!quoted){row.push(cell);cell=""}else if((ch==='\\n'||ch==='\\r')&&!quoted){if(ch==='\\r'&&next==='\\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell=""}else cell+=ch}
   if(cell||row.length){row.push(cell);rows.push(row)}
-  const headers=(rows.shift()||[]).map(x=>x.trim());
-  return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]??""])));
+  const headers=(rows.shift()||[]).map(x=>x.trim().replace(/^"|"$/g,""));
+  return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,(r[i]??"").trim()])))
 }
 export async function importMakePriceList(file:File):Promise<{products:Product[];format:"json"|"csv";source:string}>{
   const text=await file.text();const lower=file.name.toLowerCase();let raw:any[];
-  if(lower.endsWith(".csv")||lower.endsWith(".txt")){raw=parseCsv(text);return {products:raw.map(productFromExternal).filter(Boolean) as Product[],format:"csv",source:"Make Price List / CSV"}}
+  if(lower.endsWith(".csv")||lower.endsWith(".txt")){raw=parseCsv(text);const products=raw.map(productFromExternal).filter(Boolean) as Product[];if(!products.length)throw Error("No product rows detected. Check CSV headers.");return {products,format:"csv",source:"Make Price List / CSV"}}
   let parsed:any;try{parsed=JSON.parse(text)}catch{throw Error("Unsupported backup format")}
   raw=findExternalItems(parsed);
   if(!raw.length&&Array.isArray(parsed?.products))raw=parsed.products;
