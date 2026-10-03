@@ -47,37 +47,70 @@ function findExternalItems(root:any):any[]{
   }
   return [];
 }
-function parseCsv(text:string):any[]{
-  if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
-  const rows:string[][]=[];let row:string[]=[],cell="",quoted=false;
-  const firstLine=(()=>{let s="",q=false;for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(ch==='"'){if(q&&next==='"'){s+='"';i++}else q=!q}else if((ch==='\\n'||ch==='\\r')&&!q)break;else s+=ch}return s})();
-  const candidates=[",",";","\t","|"];const delimiter=candidates.reduce((best,d)=>firstLine.split(d).length>firstLine.split(best).length?d:best,",");
+function delimiterFor(text:string):string{
+  const line=text.split(/\r?\n/,1)[0]||"";
+  const candidates=[",",";","\t","|"];
+  return candidates.reduce((best,d)=>line.split(d).length>line.split(best).length?d:best,",");
+}
+function parseRows(text:string):string[][]{
+  text=text.replace(/^\uFEFF/,"");
+  const rows:string[][]=[];let row:string[]=[],cell="",quoted=false,delimiter=delimiterFor(text);
   for(let i=0;i<text.length;i++){
     const ch=text[i],next=text[i+1];
     if(ch==='"'){
-      if(quoted&&next==='"'){cell+='"';i++}else quoted=!quoted;
-    }else if(ch===delimiter&&!quoted){
-      row.push(cell);cell="";
-    }else if((ch==='\\n'||ch==='\\r')&&!quoted){
-      if(ch==='\\r'&&next==='\\n')i++;
+      if(quoted&&next==='"'){cell+='"';i++;}else quoted=!quoted;
+    }else if(ch===delimiter&&!quoted){row.push(cell);cell="";}
+    else if((ch==='\n'||ch==='\r')&&!quoted){
+      if(ch==='\r'&&next==='\n')i++;
       row.push(cell);
-      if(row.some(x=>x.trim()))rows.push(row);
+      if(row.some(x=>x.trim()))rows.push(row.map(x=>x.trim()));
       row=[];cell="";
     }else cell+=ch;
   }
-  if(cell.length||row.length){row.push(cell);if(row.some(x=>x.trim()))rows.push(row)}
-  const headers=(rows.shift()||[]).map(x=>x.trim().replace(/^"|"$/g,""));
-  return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,(r[i]??"").trim()])));
+  if(cell.length||row.length){row.push(cell);if(row.some(x=>x.trim()))rows.push(row.map(x=>x.trim()));}
+  return rows;
+}
+const CSV_HEADER_KEYS=["name","itemname","productname","item","product","brand","brandname","model","size","weight","variant","sku","itemcode","code","barcode","barcode","upc","qr","category","group","type","buy","buyprice","cost","costprice","purchaseprice","sell","sale","saleprice","sellingprice","price","rate","stock","quantity","qty","minstock","minimumstock","unit","units"];
+function headerScore(r:string[]):number{
+  return r.reduce((n,v)=>n+(CSV_HEADER_KEYS.includes(cleanKey(v))?1:0),0);
+}
+function parseCsv(text:string):any[]{
+  const rows=parseRows(text);
+  if(!rows.length)return [];
+  let headerIndex=-1;
+  for(let i=0;i<Math.min(rows.length,30);i++){
+    if(headerScore(rows[i])>=2&&rows[i].some(v=>/^(name|item|product)(\s|$)/i.test(v.trim()))){headerIndex=i;break;}
+  }
+  if(headerIndex<0){
+    for(let i=0;i<Math.min(rows.length,30);i++){
+      if(headerScore(rows[i])>=3){headerIndex=i;break;}
+    }
+  }
+  if(headerIndex>=0){
+    const headers=rows[headerIndex].map((h,i)=>h||("column"+i));
+    return rows.slice(headerIndex+1).map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]??""]))).filter(o=>Object.values(o).some(v=>String(v).trim()));
+  }
+  // Fallback for headerless CSV exported from simple inventory tools.
+  const defaults=["name","brand","model","sku","barcode","category","buy","sell","stock","minStock","unit"];
+  return rows.map(r=>Object.fromEntries(defaults.map((h,i)=>[h,r[i]??""])));
 }
 export async function importMakePriceList(file:File):Promise<{products:Product[];format:"json"|"csv";source:string}>{
-  const text=await file.text();const lower=file.name.toLowerCase();let raw:any[];
-  const looksCsv=lower.endsWith(".csv")||lower.endsWith(".txt")||(!lower.endsWith(".json")&&text.split(/\r?\n/).slice(0,5).some(line=>line.includes(",")||line.includes(";")||line.includes("\t")||line.includes("|")));
-  if(looksCsv){raw=parseCsv(text);const products=raw.map(productFromExternal).filter(Boolean) as Product[];if(!products.length)throw Error("No product rows detected. Check CSV headers.");return {products,format:"csv",source:"Make Price List / CSV"}}
-  let parsed:any;try{parsed=JSON.parse(text)}catch{throw Error("Unsupported backup format")}
+  const bytes=await file.arrayBuffer();
+  const b=new Uint8Array(bytes);
+  const text=(b.length>=2&&b[0]===0xff&&b[1]===0xfe)?new TextDecoder("utf-16le").decode(b):(b.length>=2&&b[0]===0xfe&&b[1]===0xff)?new TextDecoder("utf-16be").decode(b):new TextDecoder("utf-8").decode(b);
+  const lower=file.name.toLowerCase();
+  const looksCsv=lower.endsWith(".csv")||lower.endsWith(".txt")||(!lower.endsWith(".json")&&/[,;|\t]/.test(text.slice(0,8000)));
+  if(looksCsv){
+    const raw=parseCsv(text);
+    const products=raw.map(productFromExternal).filter(Boolean) as Product[];
+    if(!products.length)throw Error("No product rows detected. Check that the CSV contains a Name/Item/Product column.");
+    return {products,format:"csv",source:"Make Price List / CSV"};
+  }
+  let parsed:any;try{parsed=JSON.parse(text.replace(/^\uFEFF/,""))}catch{throw Error("Unsupported backup format")};
   raw=findExternalItems(parsed);
   if(!raw.length&&Array.isArray(parsed?.products))raw=parsed.products;
   const products=raw.map(productFromExternal).filter(Boolean) as Product[];
   if(!products.length)throw Error("No compatible products found");
-  return {products,format:"json",source:"Make Price List / backup"}
+  return {products,format:"json",source:"Make Price List / backup"};
 }
 export function importState(file:File):Promise<State>{return file.text().then(t=>{const x=JSON.parse(t);if(!x.products||!x.sales||!x.settings)throw Error("Invalid Sinvo backup");return normalize(x)})}
