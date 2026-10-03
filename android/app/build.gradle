@@ -1,4 +1,4 @@
 plugins { id "com.android.application" }
 android { namespace "com.sinvo.shop"; compileSdk 35
-  defaultConfig { applicationId "com.sinvo.shop"; minSdk 23; targetSdk 35; versionCode 4; versionName "1.3.0" }
+  defaultConfig { applicationId "com.sinvo.shop"; minSdk 23; targetSdk 35; versionCode 5; versionName "1.4.0" }
 }
