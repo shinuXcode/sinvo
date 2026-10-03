@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,7 +23,16 @@ jobs:
       - run: mkdir -p android/app/src/main/res/drawable && base64 -d android/sinvo_logo.b64 > android/app/src/main/res/drawable/sinvo_logo.png
       - run: rm -rf android/app/src/main/assets/web && mkdir -p android/app/src/main/assets/web && cp -r dist/. android/app/src/main/assets/web/
       - run: gradle -p android assembleDebug --no-daemon
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk "Sinvo-Android.apk"
       - uses: actions/upload-artifact@v4
         with:
           name: sinvo-android-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: Sinvo-Android.apk
+      - name: Publish direct Android download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Sinvo Android Latest
+          prerelease: false
+          make_latest: true
+          files: Sinvo-Android.apk
