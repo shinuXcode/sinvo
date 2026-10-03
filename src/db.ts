@@ -10,6 +10,21 @@ function normalize(x:any):State{const base:any=clone(empty);Object.assign(base,x
 function idb():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const o=indexedDB.open("sinvo",2);o.onupgradeneeded=()=>{if(!o.result.objectStoreNames.contains("state"))o.result.createObjectStore("state")};o.onsuccess=()=>resolve(o.result);o.onerror=()=>reject(o.error)})}
 export async function load():Promise<State>{if(memory)return clone(memory);if(!("indexedDB"in window)){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("sinvo-state-v1");memory=normalize(raw?JSON.parse(raw):empty)}catch{memory=clone(empty)}return clone(memory)}
 try{const db=await idb();const tx=db.transaction("state","readonly");const r=tx.objectStore("state").get("main");const v=await new Promise<any>((ok,no)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});memory=normalize(v?JSON.parse(v):empty);return clone(memory)}catch{memory=clone(empty);return clone(memory)}}
+export async function loadFresh():Promise<State>{
+  if(!("indexedDB"in window)){
+    try{
+      const raw=localStorage.getItem(KEY)||localStorage.getItem("sinvo-state-v1");
+      return normalize(raw?JSON.parse(raw):empty);
+    }catch{return clone(empty)}
+  }
+  try{
+    const db=await idb();
+    const tx=db.transaction("state","readonly");
+    const r=tx.objectStore("state").get("main");
+    const v=await new Promise<any>((ok,no)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+    return normalize(v?JSON.parse(v):empty);
+  }catch{return clone(empty)}
+}
 export async function save(s:State){memory=normalize(s);if(!("indexedDB"in window)){localStorage.setItem(KEY,JSON.stringify(memory));return}const db=await idb();const tx=db.transaction("state","readwrite");tx.objectStore("state").put(JSON.stringify(memory),"main");await new Promise<void>((ok,no)=>{tx.oncomplete=()=>ok();tx.onerror=()=>no(tx.error)})}
 export function id(){return crypto.randomUUID()}export function money(n:number,c="₹"){return c+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
 export function exportState(s:State){const b=new Blob([JSON.stringify(s,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sinvo-backup.json";a.click();URL.revokeObjectURL(a.href)}
