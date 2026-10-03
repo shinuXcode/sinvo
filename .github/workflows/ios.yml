@@ -41,11 +41,11 @@ jobs:
       - name: Generate iOS icons and splash
         run: npx capacitor-assets generate --ios
       - name: Resolve Swift packages
-        run: xcodebuild -resolvePackageDependencies -workspace ios/App/App.xcworkspace -scheme App
+        run: xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
       - name: Build unsigned iOS archive
         run: |
           set -e
-          xcodebuild             -workspace ios/App/App.xcworkspace             -scheme App             -sdk iphoneos             -configuration Release             -archivePath "$PWD/build/Sinvo.xcarchive"             archive             IPHONEOS_DEPLOYMENT_TARGET=15.0             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO
+          xcodebuild             -project ios/App/App.xcodeproj             -scheme App             -sdk iphoneos             -configuration Release             -archivePath "$PWD/build/Sinvo.xcarchive"             archive             IPHONEOS_DEPLOYMENT_TARGET=15.0             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO
       - name: Verify archive
         run: |
           test -d build/Sinvo.xcarchive/Products/Applications/App.app
