@@ -122,7 +122,7 @@ export async function importMakePriceList(file:File):Promise<{products:Product[]
     return {products,format:"csv",source:"Make Price List / CSV"};
   }
   let parsed:any;try{parsed=JSON.parse(text.replace(/^\uFEFF/,""))}catch{throw Error("Unsupported backup format")};
-  raw=findExternalItems(parsed);
+  let raw=findExternalItems(parsed);
   if(!raw.length&&Array.isArray(parsed?.products))raw=parsed.products;
   const products=raw.map(productFromExternal).filter(Boolean) as Product[];
   if(!products.length)throw Error("No compatible products found");
