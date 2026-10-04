@@ -247,3 +247,66 @@ html{scroll-behavior:smooth}.showcase{min-height:100vh;overflow:hidden;position:
   .versionCard,.versionCard.latest,.versionCard.latest:after,.latestBadge,.versionPlatform,.versionsHeader .eyebrow,.versionsPage:before,.versionsPage:after{animation:none!important}
   .versionsBack,.versionActions .showcasePrimary span,.versionsHeader .showcasePrimary span,.versionActions .showcaseSecondary span{transition:none!important}
 }
+
+
+/* SINVO Android UI refresh — clean POS surface, real SVG icons, restrained motion */
+.app{background:radial-gradient(circle at 100% 0%,rgba(22,119,255,.07),transparent 30%),#f6f8fb!important;color:#172033!important}
+.app header{height:68px!important;padding:10px 18px!important;background:rgba(255,255,255,.88)!important;backdrop-filter:blur(18px);box-shadow:0 1px 0 rgba(20,32,52,.06),0 8px 28px rgba(20,32,52,.05);z-index:1001}
+.app header>div:first-child{min-width:0;display:flex;align-items:center;gap:10px}
+.app header img{width:38px;height:38px;object-fit:contain;border-radius:12px;filter:drop-shadow(0 5px 10px rgba(22,119,255,.12))}
+.app header .brand{font-size:20px!important;letter-spacing:.12em!important}
+.app header .sub{display:block!important;margin:1px 0 0!important;font-size:10px!important;letter-spacing:.04em}
+.app header .icon{display:grid;place-items:center;padding:0!important;flex:0 0 40px;transition:transform .2s ease,background .2s ease,box-shadow .2s ease}
+.app header .icon:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(22,119,255,.12)}
+.sinvoIcon{display:block;flex:0 0 auto}
+.app nav{height:70px!important;background:rgba(255,255,255,.92)!important;border:1px solid rgba(218,224,233,.95)!important;box-shadow:0 14px 40px rgba(22,32,51,.14)!important}
+.app nav button{position:relative;gap:4px!important;font-size:10px!important;transition:transform .2s ease,color .2s ease,background .2s ease}
+.app nav button:hover{transform:translateY(-2px)}
+.app nav button .navIcon{width:28px;height:28px;margin:0!important;display:grid;place-items:center;font-size:0!important}
+.app nav button .navIcon .sinvoIcon{transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.app nav button.active .navIcon .sinvoIcon{transform:scale(1.08)}
+.app nav .active{box-shadow:0 6px 18px rgba(22,119,255,.12)}
+.app main{padding-top:22px!important}
+.appMain{animation:sinvoPageIn .34s cubic-bezier(.2,.75,.25,1) both}
+.priceListHeader{animation:sinvoFadeUp .4s cubic-bezier(.2,.75,.25,1) both}
+.priceListHeader h2{font-size:29px!important;letter-spacing:-.04em!important}
+.priceToolbar{animation:sinvoFadeUp .46s .03s cubic-bezier(.2,.75,.25,1) both}
+.priceSearch{background:rgba(255,255,255,.92)!important;border-color:#e0e5ec!important;box-shadow:0 7px 24px rgba(22,32,51,.055);transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+.priceSearch:focus-within{border-color:#8bbcff!important;box-shadow:0 0 0 4px rgba(22,119,255,.08),0 10px 28px rgba(22,32,51,.08);transform:translateY(-1px)}
+.priceSearch .sinvoIcon{color:#6e7b8e}
+.barcodeScanButton{background:#edf4ff!important;border-color:#cfe0ff!important;color:#1677ff!important;transition:transform .18s ease,box-shadow .18s ease}
+.barcodeScanButton:hover{transform:scale(1.04);box-shadow:0 6px 15px rgba(22,119,255,.14)}
+.smallPrimary{display:inline-flex!important;align-items:center;justify-content:center;gap:7px}
+.smallPrimary .sinvoIcon{color:currentColor}
+.productQuickActions{align-items:center}
+.priceList{gap:10px!important}
+.priceItem{background:rgba(255,255,255,.92)!important;border-color:#e2e7ee!important;box-shadow:0 4px 16px rgba(22,32,51,.045);transition:transform .24s cubic-bezier(.2,.75,.25,1),box-shadow .24s ease,border-color .24s ease!important;animation:sinvoItemIn .42s cubic-bezier(.2,.75,.25,1) both}
+.priceItem:nth-child(1){animation-delay:.04s}.priceItem:nth-child(2){animation-delay:.08s}.priceItem:nth-child(3){animation-delay:.12s}.priceItem:nth-child(4){animation-delay:.16s}.priceItem:nth-child(5){animation-delay:.2s}.priceItem:nth-child(n+6){animation-delay:.24s}
+.priceItem:hover{transform:translateY(-3px)!important;box-shadow:0 12px 30px rgba(22,32,51,.09)!important;border-color:#cdd9ea!important}
+.itemIcon{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 16px rgba(22,119,255,.10)}
+.floatingAdd{width:58px!important;height:58px!important;display:grid!important;place-items:center!important;background:linear-gradient(145deg,#2387ff,#1266dc)!important;box-shadow:0 13px 30px rgba(22,119,255,.28),0 0 0 6px rgba(22,119,255,.07)!important;transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease!important}
+.floatingAdd:hover{transform:translateY(-4px) scale(1.04)!important}
+.floatingAdd:active{transform:scale(.9)!important}
+.billing{animation:sinvoPageIn .34s cubic-bezier(.2,.75,.25,1) both}
+.productPick{background:rgba(255,255,255,.92)!important;border-color:#e2e7ee!important;box-shadow:0 4px 14px rgba(22,32,51,.035);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease!important}
+.productPick:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(22,32,51,.08);border-color:#cdd9ea!important}
+.cart{background:rgba(255,255,255,.94)!important;border-color:#e0e5ec!important;box-shadow:0 12px 32px rgba(22,32,51,.07)!important;border-radius:20px!important}
+.cartActions .primary{box-shadow:0 8px 18px rgba(22,119,255,.16);transition:transform .2s ease,box-shadow .2s ease}
+.cartActions .primary:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(22,119,255,.22)}
+@keyframes sinvoPageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sinvoFadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes sinvoItemIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+@media(max-width:760px){
+  .app header{padding-inline:14px!important}
+  .app header img{width:36px;height:36px}
+  .app header .brand{font-size:18px!important}
+  .app main{padding-inline:13px!important}
+  .priceListHeader{align-items:stretch!important;flex-direction:column!important;gap:12px!important}
+  .productQuickActions{width:100%}
+  .productQuickActions button{flex:1}
+  .floatingAdd{right:16px!important;bottom:91px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .appMain,.priceListHeader,.priceToolbar,.priceItem{animation:none!important}
+  .app nav button,.priceItem,.priceSearch,.floatingAdd,.cartActions .primary{transition:none!important}
+}
