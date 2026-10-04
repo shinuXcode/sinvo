@@ -36,7 +36,6 @@ jobs:
           echo "$BADGING" | grep -F "package: name='com.sinvo.shop'"
           echo "$BADGING" | grep -F "versionCode='6'"
           echo "$BADGING" | grep -F "versionName='1.4.1'"
-          unzip -t "$APK" >/dev/null
           sha256sum "$APK"
           unzip -t "$APK" >/dev/null
       - name: Read app version
@@ -47,12 +46,6 @@ jobs:
           echo "version_code=$(grep -o 'versionCode [0-9]*' android/app/build.gradle | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - run: cp android/app/build/outputs/apk/debug/app-debug.apk "Sinvo-Android.apk"
       - uses: actions/upload-artifact@v4
-        with:
-          name: sinvo-android-debug
-          path: Sinvo-Android.apk
-        uses: softprops/action-gh-release@v2
-        with:
-          prerelease: true
           make_latest: false
           files: Sinvo-Android.apk
       - name: Publish direct Android download
