@@ -49,6 +49,7 @@ jobs:
         with:
           name: sinvo-android-debug
           path: Sinvo-Android.apk
+      - name: Publish direct Android download
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-latest
