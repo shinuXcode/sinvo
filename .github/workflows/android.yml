@@ -23,10 +23,22 @@ jobs:
       - run: mkdir -p android/app/src/main/assets && cp android/sinvo_logo.svg android/app/src/main/assets/sinvo_logo.svg
       - run: rm -rf android/app/src/main/assets/web && mkdir -p android/app/src/main/assets/web && cp -r dist/. android/app/src/main/assets/web/
       - run: gradle -p android assembleDebug --no-daemon
+      - name: Verify APK package and signature
+        shell: bash
+        run: |
+          set -e
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          SDK_BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          "$SDK_BUILD_TOOLS/apksigner" verify --verbose "$APK"
+          "$SDK_BUILD_TOOLS/aapt2" dump badging "$APK" | grep -E "package: name='com.sinvo.shop'|versionCode='6'|versionName='1.4.1'"
+          unzip -t "$APK" >/dev/null
       - name: Read app version
         id: version
         shell: bash
-        run: echo "version=$(grep -o 'versionName "[^"]*"' android/app/build.gradle | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(grep -o 'versionName "[^"]*"' android/app/build.gradle | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+          echo "version_code=$(grep -o 'versionCode [0-9]*' android/app/build.gradle | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - run: cp android/app/build/outputs/apk/debug/app-debug.apk "Sinvo-Android.apk"
       - uses: actions/upload-artifact@v4
         with:
@@ -35,12 +47,11 @@ jobs:
       - name: Publish versioned Android release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Sinvo v${{ steps.version.outputs.version }}
+          tag_name: v\${{ steps.version.outputs.version }}
+          name: Sinvo v\${{ steps.version.outputs.version }}
           prerelease: false
           make_latest: true
           files: Sinvo-Android.apk
-
       - name: Publish direct Android download
         uses: softprops/action-gh-release@v2
         with:
@@ -49,11 +60,10 @@ jobs:
           prerelease: false
           make_latest: true
           files: Sinvo-Android.apk
-
       - name: Refresh website version history
         env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
+          GH_TOKEN: \${{ github.token }}
+          VERSION: \${{ steps.version.outputs.version }}
         shell: bash
         run: |
           mkdir -p public
