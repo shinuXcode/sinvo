@@ -31,7 +31,13 @@ jobs:
           test -s "$APK"
           SDK_BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
           "$SDK_BUILD_TOOLS/apksigner" verify --verbose "$APK"
-          "$SDK_BUILD_TOOLS/aapt2" dump badging "$APK" | grep -E "package: name='com.sinvo.shop'|versionCode='6'|versionName='1.4.1'"
+          BADGING="$("$SDK_BUILD_TOOLS/aapt2" dump badging "$APK")"
+          echo "$BADGING"
+          echo "$BADGING" | grep -F "package: name='com.sinvo.shop'"
+          echo "$BADGING" | grep -F "versionCode='6'"
+          echo "$BADGING" | grep -F "versionName='1.4.1'"
+          unzip -t "$APK" >/dev/null
+          sha256sum "$APK"
           unzip -t "$APK" >/dev/null
       - name: Read app version
         id: version
@@ -44,21 +50,18 @@ jobs:
         with:
           name: sinvo-android-debug
           path: Sinvo-Android.apk
-      - name: Publish versioned Android release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Sinvo v${{ steps.version.outputs.version }}
-          prerelease: false
-          make_latest: true
+          prerelease: true
+          make_latest: false
           files: Sinvo-Android.apk
       - name: Publish direct Android download
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-latest
           name: Sinvo Android Latest
-          prerelease: false
-          make_latest: true
+          prerelease: true
+          make_latest: false
           files: Sinvo-Android.apk
       - name: Refresh website version history
         env:
