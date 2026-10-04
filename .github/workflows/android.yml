@@ -47,8 +47,8 @@ jobs:
       - name: Publish versioned Android release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v\${{ steps.version.outputs.version }}
-          name: Sinvo v\${{ steps.version.outputs.version }}
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Sinvo v${{ steps.version.outputs.version }}
           prerelease: false
           make_latest: true
           files: Sinvo-Android.apk
@@ -62,8 +62,8 @@ jobs:
           files: Sinvo-Android.apk
       - name: Refresh website version history
         env:
-          GH_TOKEN: \${{ github.token }}
-          VERSION: \${{ steps.version.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
           mkdir -p public
