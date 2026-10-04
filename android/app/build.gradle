@@ -1,6 +1,18 @@
 plugins { id "com.android.application" }
 android { namespace "com.sinvo.shop"; compileSdk 35
   defaultConfig { applicationId "com.sinvo.shop"; minSdk 23; targetSdk 35; versionCode 6; versionName "1.4.1" }
+  signingConfigs {
+    release {
+      storeFile file(System.getenv("SINVO_KEYSTORE_FILE") ?: "sinvo-release.jks")
+      storePassword System.getenv("SINVO_KEYSTORE_PASSWORD") ?: ""
+      keyAlias System.getenv("SINVO_KEY_ALIAS") ?: "sinvo"
+      keyPassword System.getenv("SINVO_KEY_PASSWORD") ?: ""
+    }
+  }
+  buildTypes {
+    debug { signingConfig signingConfigs.release }
+    release { signingConfig signingConfigs.release; minifyEnabled false }
+  }
 }
 configurations.all {
   resolutionStrategy.eachDependency { details ->
